@@ -1,0 +1,261 @@
+Metapop supports an RPC interface for manipulating the simulation as it progresses.
+
+To use Metapop RPC, start Metapop in RPC mode with the following command-line options:
+	/RPC=<RPC server name>		// the name of the RPC server, like MetapopManager
+	/RPCID=n					// the RPC client ID of this instance, like 0
+	/RUN=YES					// Metapop must be started in batch mode to support RPC
+	<Metapop model filename>	// the filename of the model to run in RPC mode
+	
+When the above options are correctly specified on the command line, Metapop will load
+the specified model file, call the RPC server and start the simulation.
+
+
+ROUTINES
+--------
+During normal processing, Metapop makes the following remote procedure calls to the RPC server:
+
+function Initialize(const ClientID: Cardinal): Boolean;
+- return True to continue, return False to cancel
+
+function StartSimulation(const MetapopStateVarsGlobal: TRpcMetapopStateVarsGlobal): Boolean;
+- store values from metapopStateVarsGlobal as needed for simulation
+- return True to continue, return False to cancel
+
+type
+  TModifierResult = record
+    modifier: TRpcMetapopModifier;
+	result  : Boolean;
+  end;
+function StartTimeStep: TModifierResult;
+- fill TModifierResult.modifier  as desired to make Metapop change simulation data
+- return True for TModifierResult.result to continue, return False to cancel
+
+function StopTimeStep(const MetapopStateVarsPop: TRpcMetapopStateVarsPop): Boolean;
+- store values from metapopStateVarsPop as needed for next time step
+- return True to continue, return False to cancel
+
+function StopSimulation: Boolean;
+- clean up after simulation
+- return True to continue, return False to cancel
+  (it usually doesn't make sense to cancel once the simulation has finished)
+  
+procedure Finalize;
+- clean up
+- no return value required
+
+
+TYPES
+-----
+For the latest definitions, please see RpcMetapopModifier.pas and RpcMetapopStateVars.pas.
+
+
+  TRpcMetapopModifier = record
+    //ModifierType: TRpcModifierType;
+    // Flags indicating values to change
+    // Spec: Categorical indicator of what is to be modified: abundance, vital
+    //       rates, carrying capacity or dispersal
+    //       (ultimately, it should be possible to modify more than one;
+    //       therefore, an array of Booleans may be most appropriate)
+    ChangeAbund : Boolean;
+    ChangeVital : Boolean;
+    ChangeK     : Boolean;
+    ChangeDisp  : Boolean;
+
+    // Spec: Last year for which complete simulation data are available for all
+    //       component models (scalar integer).
+    Timestep    : Cardinal;
+
+    // Spec: Boolean indicator of whether this modifier object is complete and
+    //       ready to be used in a Metapop simulation (single Boolean).
+    Complete    : Boolean;
+
+    // Spec: Boolean indicator of whether this modifier object is currently in
+    //       effect (single Boolean). [[for now, always TRUE]]
+    Active      : Boolean;
+
+    // TODO: properly define and implement VarList
+//    // Spec: List of optional variables that can be monitored, and thereby used
+//    //       to modify any of the metamodel linkage options specified in Type
+//    //       (vector of Booleans of length "number of possible variables"- see
+//    //       Metapop Manager description below for a more detailed list of
+//    //       variables).
+//    VarList:
+
+    // Spec: modified stage-specific abundances (matrix of dimension
+    //       "nPopulations", "nStages"). Replaces stage-specific abundances for
+    //       each population. Not compatible with catastrophes affecting
+    //       abundance.
+    Abund       : T2DCardinalArray;
+
+    // Spec: modified vital rates (matrix of dimension "nPopulations",
+    //       "nStages", "nStages"). Replaces mean population-specific transition
+    //       matrix values. Not compatible with temporal changes in vital rates
+    //       or catastrophes that affect vital rates.
+    Vital       : T3DDoubleArray;
+
+    // Spec: modified mean population-specific carrying capacities (vector of
+    //       length "nPopulations"). Replaces mean population-specific K values.
+    //       Not compatible with "temporal change in K" or catastrophes that
+    //       affect K.
+    K           : TCardinalVector;
+
+    // Spec: dispersal rate modifier (vector of length "nPopulations"). Modifies
+    //       dispersal rates relative to the rate expected for a given stage and
+    //       population pairing. Not compatible with catastrophes that affect
+    //       dispersal. [[this should probably be tabled for now, until we can
+    //       clarify the details]]
+    Disp        : TDoubleVector;
+  end;
+
+  
+  
+  // Spec: Global state variables (read from Metapop, cannot be modified from
+  //       outside but may be used in forging metamodel linkages). These data
+  //       are always stored by Metapop Manager but only need to be read in
+  //       once.
+  TRpcMetapopStateVarsGlobal = record
+    // Spec: Number of populations (scalar) (must be read in each year)
+    nPopulations: Cardinal;
+
+    // Spec: Number of stages (scalar)
+    nStages: Cardinal;
+
+    // WTR disabled nMP, since Metapop doesn't know this!
+//    // Spec: Number of Metapop instances being run simultaneously (scalar).
+//    nMP: Cardinal;
+
+    // Spec: Constraints matrix (matrix of dimension "nStages", "nStages")
+    constraintsMat: T2DDoubleArray;
+
+    // Spec: Stage-specific average mass (vector of length "nStages")
+    stageMass: TDoubleVector;
+
+    // Spec: Stage-specific proportion breeding (vector of length "nStages")
+    stageBreed: TDoubleVector;
+
+    // Spec: Stage-specific relative dispersal (vector of length "nStages")
+    stageRelDisp: TDoubleVector;
+
+    // Spec: Basis for density dependence (vector of length "nStages")
+    stageDD: TDoubleVector;
+
+    // Spec: Number of defined catastrophes (scalar)
+    nCatastrophes: Cardinal;
+
+    // Spec: Indicates whether catastrophe affects survival, abundance, or K
+    //       (Boolean array of dimension "nCatastrophes", 4 [4 types of
+    //       catastrophe])
+    catType: T2DBooleanArray;
+
+    // Spec: Stage-specific catastrophe multiplier (array of dimension
+    //       "nCatastrophes","nStages")
+    catStages: T2DDoubleArray;
+
+
+  public
+    function AsJson: String;
+    function AsSuperObject: ISuperObject;
+
+  end;
+
+
+  // Spec: Population state variables (read from Metapop, cannot be directly
+  //       modified from outside but are optionally available for use in forging
+  //       metamodel linkages). These variables are stored only if a user has
+  //       specified to do so.
+  TRpcMetapopStateVarsPop = record
+    // Spec: Total abundance for each population (vector of dimension "nPopulations")
+    popAbundTot: TCardinalVector;
+
+    // Spec: Total number of adult females (vector of dimension "nPopulations")
+    popAbundFem: TCardinalVector;
+
+    // Spec: Total number of adult males (vector of dimension "nPopulations")
+    popAbundMale: TCardinalVector;
+
+    // Spec: percent breeders that have mates (vector of dimension "nPopulations")
+    PBM: TDoubleVector;
+
+    // Spec: Disperser matrix (array of dimension "nPopulations", "nPopulations", "nStages")
+    disperserMat: T3DDoubleArray;
+
+    // Spec: Dispersal matrix (matrix of dimension "nPopulations", "nPopulations")
+    dispersalMat: T2DDoubleArray;
+
+    // Spec: correlated standard normal deviate for fecundity (vector of length "nPopulations")
+    NDF: TDoubleVector;
+
+    // Spec: correlated standard normal deviate for survival (vector of length "nPopulations")
+    NDS: TDoubleVector;
+
+    // Spec: correlated standard normal deviate for carrying capacity (vector of length "nPopulations")
+    NDK: TDoubleVector;
+
+    // Spec: Number of emigrants (array of dimension "nPopulations", "nStages")
+    popEmigrants: T2DCardinalArray;
+
+    // Spec: Number of immigrants (array of dimension "nPopulations", "nStages")
+    popImmigrants: T2DCardinalArray;
+
+    // Spec: Catastrophe status (array of dimension "nPopulations", 2)
+    popCatStatus: T2DBooleanArray;
+
+    // Spec: Time since last catastrophe (array of dimension "nPopulations", 2)
+    popTimeSince: T2DCardinalArray;
+
+    // Spec: Catastrophe probability (vector of length "nPopulations")
+    popCatProb: TDoubleVector;
+
+    // Spec: Maximum growth rate (vector of length "nPopulations")
+    popRmax: TDoubleVector;
+
+    // Spec: number of individuals harvested (array of dimension "nPopulations", "nStages")
+    popHarvest: T2DCardinalArray;
+
+    // Spec: number of individuals supplemented (array of dimension "nPopulations", "nStages")
+    popSupplement: T2DCardinalArray;
+
+    // Spec: actual or realized K (with stochasticity).(vector of length
+    //       "nPopulations")
+    popK2: TCardinalVector;
+
+    // Spec: Realized transition matrices, including stochasticity …
+    popStMat2: T3DDoubleArray;
+
+
+    //////////
+    // Spec: Population state variables (read from Metapop: modifications to
+    //       these variables are translated into a set of multipliers stored in
+    //       the "Metapop modifier" object). These variables [sic]
+    //////////
+
+    // Spec: Stage-specific abundances for each population (matrix of dimension
+    //       "nPopulations","nStages")  [[modifications result in specification
+    //       of "abundance modifier" ]]
+    popAbundSt: T2DCardinalArray;
+
+    // Spec: Mean transition matrices for each population (array of dimension
+    //       "nPopulations", "nStages", "nStages")   [[modifications result in
+    //       specification of "vital rate modifier"]]
+    popStMat: T3DDoubleArray;
+
+    // Spec: Mean population-specific carrying capacity (vector of length
+    //       "nPopulations").  [[modifications result in specification of "K
+    //       modifier"]]
+    popK: TCardinalVector;
+
+    // Spec: Relative dispersal rate (matrix of dimension "nPopulations",
+    //       "nStages") [[modifications result in specification of "dispersal
+    //       modifier"]]
+    relDispersal: T2DDoubleArray;
+
+
+  public
+    function  AsJson: String;
+    function  AsSuperObject: ISuperObject;
+    procedure Initialize(const popCount: Cardinal; const stageCount: Cardinal);
+
+  end;
+
+
+  
