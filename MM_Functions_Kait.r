@@ -82,7 +82,7 @@ PredRnoprey <- 0.1   # "Rmax" for predator (no prey available, must be less than
 
 # // alpha: slope of the function at origin; the rate at which the prey population is made available
 # //        to the predator population: the prey death rate due to predation cannot exceed alpha
-alpha <-  1      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
+alpha <-  0.9 #1    # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
 
 # // htime: handling time; 1/asymptote
 MaxKill   <- 1000     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
@@ -351,10 +351,17 @@ ModVitalPrey1 <- function(Old, ID){
                TotalSurv <- 0.5
           }
           
+		  
+		  
           if(length(which(TotalSurv>(1+tol)))>0) {      #### THIS SEEMS STRANGE: high survival stages will routinely throw this error, right!
-               flag <<- TRUE
-               ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
-               break
+               target <- 0.99999
+			   SurvMult <- ifelse(TotalSurv>1, target/TotalSurv, 1)
+			   multMat <- matrix(rep(SurvMult, times = nrow(preyStMat)), nrow = nrow(preyStMat), ncol = ncol(preyStMat), byrow = TRUE) * as.matrix(GlobalVars[[ID+1]]$constraintsMat) + (1-as.matrix(GlobalVars[[ID+1]]$constraintsMat))
+			   preyStMat <- as.matrix(preyStMat) * multMat
+			  
+				#flag <<- TRUE
+				#ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
+				#break
           } 
           
           # if(length(which(TotalSurv<0.999999))>0) {throw error} # KTS: I'm not sure why this is an error condition
