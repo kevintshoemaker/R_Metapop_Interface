@@ -78,56 +78,56 @@
 ########    LOAD USER-DEFINED GLOBAL VARIABLES
 ## note: ultimately these variables will be defined in MP manager...
 
-# // PreyRmax (max growth rate) and PreyKcap are assumed to be those when there is no predation
- PreyRmax <- 1.5      # Rmax for prey  (no predation)
- PreyKcap <- 2000000      #  K for prey (no predation)
+ # // PreyRmax (max growth rate) and PreyKcap are assumed to be those when there is no predation
+PreyRmax <- 1.2      # Rmax for prey  (no predation)
+PreyKcap <- 2000000      #  K for prey (no predation)
 
- PredRmax <- 1.5      # Rmax for predator population when glutted with prey resources. 
- PredKcap <- 250      # predator carrying capacity, when glutted with prey resources. 
+PredRmax <- 1.2      # Rmax for predator population when glutted with prey resources. 
+PredKcap <- 250      # predator carrying capacity, when glutted with prey resources. 
 
- PredRnoprey <- 0.1   # "Rmax" for predator (no prey available, must be less than 1)
+PredRnoprey <- 0.3   # "Rmax" for predator (no prey available, must be less than 1 but greater than zero)
  
- maxSurvival <- 0.99   # Maximum survival rate
+maxSurvival <- 0.99   # Maximum survival rate
 
-# # // alpha: slope of the function at origin; the rate at which the prey population is made available
-# # //        to the predator population: the prey death rate due to predation cannot exceed alpha
- alpha <-  0.25      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
+ # # // alpha: slope of the function at origin; the rate at which the prey population is made available
+ # # //        to the predator population: the prey death rate due to predation cannot exceed alpha
+alpha <-  0.25      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
 
-# # // htime: handling time; 1/asymptote
- MaxKill   <- 1000     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
- htime <-  1 / MaxKill      #  "handling time": mean time spent between kills when prey abundance greatly exceeds predator abundance.    
+ # # // htime: handling time; 1/asymptote
+MaxKill   <- 1000     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
+htime <-  1 / MaxKill      #  "handling time": mean time spent between kills when prey abundance greatly exceeds predator abundance.    
 
                      # KTS: we should really turn this into a fecundity-related term. Literally, how many offspring can be generated
 					        # at different consumption levels. Alternatively, we could generate a series of stage matrices
 							# representing low and high survivals/fecundities representing various consumption levels.
- EffConst <- 0.05   #   0.02  # this term translates consumption rates (functional response) to predator lambda. That is, converts the functional response to a numerical response.  
+EffConst <- 0.1   #   0.02  # this term translates consumption rates (functional response) to predator lambda. That is, converts the functional response to a numerical response.  
 
-# #Rows = Predator populations, Cols = Prey Populations, percent of that pred pop that feed on that prey pop
-# #PredFeed <- matrix(0, nrow=GlobalVars[[2]]$nPopulations, ncol=GlobalVars[[1]]$nPopulations)
- PredFeed <- matrix(0,nrow=1,ncol=1)
- PredFeed[1,1] <- 1
-#PredFeed[1,2] <- .6
-#PredFeed[2,1] <- 0
-# #PredFeed[2,2] <- 1
+ # #Rows = Predator populations, Cols = Prey Populations, percent of that pred pop that feed on that prey pop
+ # #PredFeed <- matrix(0, nrow=GlobalVars[[2]]$nPopulations, ncol=GlobalVars[[1]]$nPopulations)
+PredFeed <- matrix(0,nrow=1,ncol=1)
+PredFeed[1,1] <- 1
+ #PredFeed[1,2] <- .6
+ #PredFeed[2,1] <- 0
+ # #PredFeed[2,2] <- 1
 
-# #Rows = Prey Populations, Cols = Predator populations, percent of that prey pop that pred pop has access to
-# #PreyAccess <- matrix(0, nrow=GlobalVars[[1]]$nPopulations, ncol=GlobalVars[[2]]$nPopulations)
- PreyAccess <- matrix(0,nrow=1,ncol=1)
- PreyAccess[1,1] <- 1
-# #PreyAccess[1,2] <- 0
-# #PreyAccess[2,1] <- .7
-# #PreyAccess[2,2] <- .3
+ # #Rows = Prey Populations, Cols = Predator populations, percent of that prey pop that pred pop has access to
+ # #PreyAccess <- matrix(0, nrow=GlobalVars[[1]]$nPopulations, ncol=GlobalVars[[2]]$nPopulations)
+PreyAccess <- matrix(0,nrow=1,ncol=1)
+PreyAccess[1,1] <- 1
+ # #PreyAccess[1,2] <- 0
+ # #PreyAccess[2,1] <- .7
+ # #PreyAccess[2,2] <- .3
 
- QuasiExtinction_prey <- 100    # not used at present
- QuasiExtinction_pred <- 15
+QuasiExtinction_prey <- 100    # not used at present
+QuasiExtinction_pred <- 15
 
 
 
 ####################################
 #######  TOLERANCE PARAMETERS
-exp_biggest     <- 60.0
-pow_biggest     <- 2.6e30
-tol             <- 1e-4   # how close to an integer do you need to be?
+exp_biggest     <- 15.0
+pow_biggest     <- 2.6e10
+tol             <- 1e-3   # how close to an integer do you need to be?
 
 
 ###########################################
@@ -137,10 +137,10 @@ tol             <- 1e-4   # how close to an integer do you need to be?
 #  FUNCTIONAL RESPONSE
 
 # // Ratio-Dependent Functional Response (based on Equation 1.14 in Arditi & Ginzburg 2012)
-# // Functional response is the number of prey consumed per predator in this time period.
+# // Functional response is the number of prey killed per predator in this time period (one year).
 
 RDFuncResp <- function(PreyPop,PredPop,alpha,htime){
-     if((PreyPop==0)|(PredPop==0)){
+     if((PreyPop==0)|(PredPop==0)){       # if abundance is equal to zero for either predator or prey, then set # killed to zero
           FuncResp <- 0
      } else {
           FuncResp <- (alpha * PreyPop) / (PredPop + alpha * htime * PreyPop)
@@ -327,95 +327,100 @@ ModVitalPrey1 <- function(Old, ID){
      #   Old : Modifier object from the last year (to be updated)
      #   ID  : Client ID for the associated Metapop instance 
      
-     New <- Old
-     New$ChangeVital <- TRUE
-     
-     if(CurTimeStep[ID+1]==0) preyStMat <<- as.matrix(PopVars[[1]]$popStMat[1,,])     # set base stage matrix for prey population
-     
-     flag <<- FALSE   # initialize warning flag: no warnings
-     ErrMsg <<- "Error: "  # initialize error message
-	 WarningMsg <<- "Warning: "   # initialize warning message
-	 Dumpfile <<- "MMdump.txt"     # initialize the dumpfile for storing warnings and errors
-     
-     
-     if(CurTimeStep[ID+1]==0) CheckParams1()    # check for initial errors.... only at timestep 0
-     CheckParams2(ID=ID)                        # check for other error at all time steps
-     
-     # sum of all survivals from each stage when N is approx. 0 (when R=Rmax)
-     
-     for(p in 1:GlobalVars[[ID+1]]$nPopulations){
-          if(nrow(as.matrix(preyStMat))>1){
-               TotalSurv <- apply(as.matrix(preyStMat)*
-                                       as.matrix(GlobalVars[[ID+1]]$constraintsMat)*
-                                       PreyRmax,2,sum)              # total maximum survival rate for each stage   PopVars[[ID+1]]$popRmax[p]
-          }else{
-               TotalSurv <- 0.5
-          }
+	New <- Old
+	New$ChangeVital <- TRUE
 
-          # if(length(which(TotalSurv>(1+tol)))>0) {      #### THIS SEEMS STRANGE: high survival stages will routinely throw this error, right!
+	flag <<- FALSE   # initialize warning flag: no warnings
+	ErrMsg <<- "Error: "  # initialize error message
+	WarningMsg <<- "Warning: "   # initialize warning message
+	Dumpfile <<- "MMdump.txt"     # initialize the dumpfile for storing warnings and errors
+
+	CheckParams1()    # check for initial errors.... only at timestep 0
+     
+	if(CurTimeStep[ID+1]==0){
+		preyStMat <<- as.matrix(PopVars[[1]]$popStMat[1,,])     # set base stage matrix for prey population: baseline for further modifications
+
+		if(nrow(as.matrix(preyStMat))>1){
+			TotalSurv <- apply(as.matrix(preyStMat)*
+                                       as.matrix(GlobalVars[[ID+1]]$constraintsMat)*
+                                       PreyRmax,2,sum)              # total MAXIMUM survival rate for each stage   PopVars[[ID+1]]$popRmax[p]
+		}else{
+			TotalSurv <- 0.5
+		}
+
+          # if(length(which(TotalSurv>(1+tol)))>0) {
             # target <- maxSurvival      # target survival rate (maximum allowable survival)
  		    # SurvMult <- ifelse(TotalSurv>1, target/TotalSurv, 1)
  		    # multMat <- matrix(rep(SurvMult, times = nrow(preyStMat)), nrow = nrow(preyStMat), ncol = ncol(preyStMat), byrow = TRUE) * as.matrix(GlobalVars[[ID+1]]$constraintsMat) + (1-as.matrix(GlobalVars[[ID+1]]$constraintsMat))
  		    # preyStMat <- as.matrix(preyStMat) * multMat
           # } 
          
-          if(length(which(TotalSurv>(1+tol)))>0) {     # throw error if survival rates for any stage are above 1 
-               flag <<- TRUE
-               ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
-			   writeLines(ErrMsg,con=Dumpfile,sep="\n")
-               break
-          } 
-          
-          if(PreyKcap<=0){    # if carrying capacity is zero...      
-               lmult <- 0             # then set all vital rates to zero
-          } else{
-               lmult <- (-1*log(PreyRmax) / PreyKcap) * PopVars[[ID+1]]$popAbundTot[p]    # determine DD multiplier, log scale
-               if(abs(lmult)<exp_biggest){                               # if exponentiation is within reason
-                    lmult <- exp(lmult)                                  # then exponentiate
-               } else{
-                    if(lmult > 0){                                       # otherwise, use pre-set limits
-                         lmult <- pow_biggest                             
-                    } 	else{
-                         lmult <- 1/pow_biggest
-                    }
-               }
-               
-               # // At this point lmult~1 if N is small, and lmult=(1/Rmax) if N=K.  So:
-               # // REMOVE the following line if eigenvalue of the matrix (EV)=Rmax; 
-               # // KEEP it if EV=1.  These are the only two options.
-               EV <- eigen(as.matrix(preyStMat))$values[1]   # dominant eigenvalue of the matrix (should be 1!!)
-               if(abs(EV-1)<tol){
-                 lmult <- PreyRmax * lmult     # finally, multiply by Rmax to compute multiplier absent predator effect
-               } else
-		         flag <<- TRUE           # throw error if eigenvalue of stage matrix is not equal to 1
-			     ErrMsg <<- paste(ErrMsg," : ","eigenvalue of stage matrix is not equal to 1 for model ",ID,sep=" ")
-			     writeLines(ErrMsg,con=Dumpfile,sep="\n")
-			   }
-          }  # end if K <= 0
-          
-          #### PredMort is the per-capita prey mortality due to predation
-          effectivePredPop <- as.vector(PopVars[[2]]$popAbundTot %*% (PredFeed[,p] * PreyAccess[p,]))  #Total number of pred with access to this prey pop
-          PreyEffectivePredPop[p] <<- effectivePredPop
-          if((PopVars[[1]]$popAbundTot[p]==0)|(effectivePredPop)==0){
-               PredMort <- 0
-          } else{              # NOTE: ID 1 is prey pop, ID 2 is predator pop
-               PredMort <- RDFuncResp(PopVars[[1]]$popAbundTot[p],effectivePredPop,alpha,htime) *      # fraction of prey pop killed by predators 
-                    (effectivePredPop/PopVars[[1]]$popAbundTot[p])
-          }
-          
-          lmult <- lmult / exp(PredMort)         # finally, include predator effect
-          New$Vital[p,,] <- as.matrix(preyStMat) * lmult
-          
-          PreyVital[p] <<- New$Vital[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages]   # store adult survival rate for CSV file
-     }
+		if(length(which(TotalSurv>(1+tol)))>0){     # throw error if total maximum survival rates for any stage are above 1 
+			flag <<- TRUE
+			ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
+			writeLines(ErrMsg,con=Dumpfile,sep="\n")
+			break
+		}   
+	}   # end loop through the actions for timestep 0
+       
+	CheckParams2(ID=ID)                        # check for other errors (repeats check for all time steps)
      
-     if(flag==TRUE){     # if no errors, then return the new modifier object
-          # return(New)
-          # } else{
-          New<-ErrMsg     # otherwise, return the relevant error message(s)
-     }
-     #if(flag==FALSE) PreyVital <<- New$Vital[1,GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages] 
-     return(New)
+     # sum of all survivals from each stage when N is approx. 0 (when R=Rmax)
+     
+	for(p in 1:GlobalVars[[ID+1]]$nPopulations){     # LOOP THROUGH ALL PREY POPULATIONS
+
+          
+		if(PreyKcap<=0){				# if carrying capacity is zero...      
+			lmult <- 0					# then set all vital rates to zero
+		}else{
+			lmult <- (-1*log(PreyRmax) / PreyKcap) * PopVars[[ID+1]]$popAbundTot[p]    # determine DD multiplier, log scale
+			if(abs(lmult)<exp_biggest){                               # if exponentiation is within reason
+				lmult <- exp(lmult)                                  # then exponentiate
+			}else{
+				if(lmult > 0){                                       # otherwise, use pre-set limits
+					lmult <- pow_biggest                             
+				}else{
+					lmult <- 1/pow_biggest
+				}
+			}
+
+               
+				   # // At this point lmult~1 if N is small, and lmult=(1/Rmax) if N=K.  So:
+				   # // REMOVE the following line if eigenvalue of the matrix (EV)=Rmax; 
+				   # // KEEP it if EV=1.  These are the only two options.
+			EV <- eigen(as.matrix(preyStMat))$values[1]   # dominant eigenvalue of the matrix (should be 1!!)
+			if(abs(EV-1)<tol){
+				lmult <- PreyRmax * lmult     # finally, multiply by Rmax to compute multiplier absent predator effect
+			} else{
+				flag <<- TRUE           # throw error if eigenvalue of stage matrix is not equal to 1
+				ErrMsg <<- paste(ErrMsg," : ","eigenvalue of stage matrix is not equal to 1 for model ",ID,sep=" ")
+				writeLines(ErrMsg,con=Dumpfile,sep="\n")
+			}
+		}  # end if K <= 0
+          
+		#### PredMort is the per-capita prey mortality due to predation
+		effectivePredPop <- as.vector(PopVars[[2]]$popAbundTot %*% (PredFeed[,p] * PreyAccess[p,]))  #Total number of pred pops with access to this prey pop
+		PreyEffectivePredPop[p] <<- effectivePredPop
+		if((PopVars[[1]]$popAbundTot[p]==0)|(effectivePredPop)==0){
+			PredMort <- 0
+		}else{              # NOTE: ID 1 is prey pop, ID 2 is predator pop
+			PredMort <- RDFuncResp(PopVars[[1]]$popAbundTot[p],effectivePredPop,alpha,htime) *      # fraction of prey pop killed by predators 
+			(effectivePredPop/PopVars[[1]]$popAbundTot[p])
+		}
+
+		lmult <- lmult / exp(PredMort)         # finally, include predator effect
+		New$Vital[p,,] <- as.matrix(preyStMat) * lmult
+
+		PreyVital[p] <<- New$Vital[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages-1]   # store adult survival rate for CSV file
+	}  ## end loop through populations
+     
+	if(flag==TRUE){     # if no errors, then return the new modifier object
+		# return(New)
+		# } else{
+		New<-ErrMsg     # otherwise, return the relevant error message(s)
+	}
+	#if(flag==FALSE) PreyVital <<- New$Vital[1,GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages] 
+	return(New)
 }
 
 
@@ -428,137 +433,141 @@ ModVitalPrey1 <- function(Old, ID){
 # // PredRnoprey is the predator growth rate (eigenvalue of the matrix) when there is no prey.
 
 ModVitalPred1 <- function(Old, ID){
-     
-     #############
-     #        INPUTS
-     #   Old : Modifier object from the last year (to be updated)
-     #   ID  : Client ID for the associated Metapop instance 
-     
-     New <- Old
-     New$ChangeVital <- TRUE
-     
-     flag <<- FALSE   # initialize warning flag: no warnings
-     ErrMsg <<- "Error:"  # initialize error message
-     
-     if(CurTimeStep[ID+1]==0) predStMat <<- as.matrix(PopVars[[2]]$popStMat[1,,])     # set base stage matrix for prey population. Should have lambda=1
-     
-     if(CurTimeStep[ID+1]==0) CheckParams1()    # check for initial parameters that might be off. 
-     CheckParams2(ID=ID)	
-	 
-	 EV <- eigen(as.matrix(predStMat))$values[1]   # dominant eigenvalue of the matrix (should be 1!!)
-     if(abs(EV-1)>tol){
-	   flag <<- TRUE           # throw error if eigenvalue of stage matrix is not equal to 1
-	   ErrMsg <<- paste(ErrMsg," : ","eigenvalue of stage matrix is not equal to 1 for model ",ID,sep=" ")
-	   writeLines(ErrMsg,con=Dumpfile,sep="\n")
-     }
-     
-     for(p in 1:GlobalVars[[ID+1]]$nPopulations){
-	 
-          if(nrow(as.matrix(predStMat))>1){
-               TotalSurv <- apply(as.matrix(predStMat)*
-                                       as.matrix(GlobalVars[[ID+1]]$constraintsMat)*
-                                       PredRmax,2,sum)              # total maximum survival rate for each stage   PopVars[[ID+1]]$popRmax[p]
-          }else{
-               TotalSurv <- 0.5   
-          }
-         
-          if(any(TotalSurv>(1+tol))) {     # throw error if survival rates for any stage are above 1 
-               flag <<- TRUE
-               ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
-			   writeLines(ErrMsg,con=Dumpfile,sep="\n")
-               break
-          } 
-          
-          effectivePreyPop <- as.vector(PopVars[[1]]$popAbundTot %*% (PredFeed[p,] * PreyAccess[,p])) #Total number of prey this pred pop has access to
-          PredEffectivePreyPop[p] <<- effectivePreyPop
-          lmult <- exp(EffConst * RDFuncResp(effectivePreyPop,PopVars[[2]]$popAbundTot[p],alpha,htime)) * PredRnoprey    # compute expected lambda(dominant eigenvalue) for this year
-          
-          # // from Pred_R := exp(EffConst * RDFuncResp(PreyPop,PredPop,alpha,htime)) / exp(mu);
-          
-          # // NOTE: This equation assumes that the eigenvalue of the PREDATOR stage matrix is 1.0,
-          # // and all stage matrix elements are proportionally affected by predation.  
-          # // Thus, lMult is the eigenvalue of the predator stage matrix at this time step.  
-          # // If the user specified an Rmax, lMult should not be larger than Rmax (Rmax must be >1)
-          
-          if(lmult>PredRmax){
-               lmult <- PredRmax        # can't exceed maximum rate of growth (note: this allows predators to kill more prey than are used for predator growth)
-          }
-                    
-          New$Vital[p,,] <- as.matrix(predStMat)*lmult
-          
-          #####           # // Finally, add ceiling-type density dependence (e.g., to simulate space limitation)  [crude initial attempt]
-          if(PopVars[[2]]$popAbundTot[p] > PredKcap){
-               New$Vital[p,,] <- as.matrix(New$Vital[p,,]) * ((PredKcap/PopVars[[2]]$popAbundTot[p]))       
-          }
-          
-          PredVital[p] <<- New$Vital[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages]        # for CSV file
-          PreyConsumed[p] <<- RDFuncResp(effectivePreyPop,PopVars[[2]]$popAbundTot[p],alpha,htime) * PopVars[[2]]$popAbundTot[p]
-          #PredProduced[p] <<- (lmult * PopVars[[2]]$popAbundTot[p]) - PopVars[[2]]$popAbundTot[p]
-     }
-     
-     if(flag==TRUE){     # if no errors, then return the new modifier object
-          # return(New)
-          # } else{
-          New <- ErrMsg     # otherwise, return the relevant error message(s)
-     }
-     
-     #Stored[CurTimeStep[ID+1]+1,] <<- c(CurTimeStep[ID+1], sum(PopVars[[1]]$popAbundTot), sum(PopVars[[2]]$popAbundTot), 
-     #                                   PreyVital, New$Vital[1,GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages])
-     
-     #write.csv(Stored,"PredPreyResults.csv",row.names=FALSE)
-     
-     ExportDataToCSV(ID)
-     
-     return(New)
+
+	#############
+	#        INPUTS
+	#   Old : Modifier object from the last year (to be updated)
+	#   ID  : Client ID for the associated Metapop instance 
+
+	New <- Old
+	New$ChangeVital <- TRUE
+
+	flag <<- FALSE   									# initialize warning flag: no warnings
+	ErrMsg <<- "Error:"  # initialize error message
+
+	if(CurTimeStep[ID+1]==0){      						# if the initial time step...
+		predStMat <<- as.matrix(PopVars[[2]]$popStMat[1,,])     # set base stage matrix for prey population. Should have lambda=1
+
+		#CheckParams1()    								# check for initial parameters that might be off. 
+		EV <- eigen(as.matrix(predStMat))$values[1]   	# dominant eigenvalue of the matrix (should be 1!!)
+		if(abs(EV-1)>tol){
+			flag <<- TRUE           					# throw error if eigenvalue of stage matrix is not equal to 1
+			ErrMsg <<- paste(ErrMsg," : ","eigenvalue of stage matrix is not equal to 1 for model ",ID,sep=" ")
+			writeLines(ErrMsg,con=Dumpfile,sep="\n")
+		}
+
+		if(nrow(as.matrix(predStMat))>1){
+			TotalSurv <- apply(as.matrix(predStMat)*
+				   as.matrix(GlobalVars[[ID+1]]$constraintsMat)*
+				   PredRmax,2,sum)						# total maximum survival rate for each stage   PopVars[[ID+1]]$popRmax[p]
+		}else{
+			TotalSurv <- 0.5   
+		}
+
+		if(any(TotalSurv>(1+tol))) {					# throw error if survival rates for any stage are above 1 
+			flag <<- TRUE
+			ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
+			writeLines(ErrMsg,con=Dumpfile,sep="\n")
+			break
+		} 
+	}
+
+	CheckParams2(ID=ID)	    # checks that must be performed every year
+
+	for(p in 1:GlobalVars[[ID+1]]$nPopulations){   ## loop through all predator populations        
+		effectivePreyPop <- as.vector(PopVars[[1]]$popAbundTot %*% (PredFeed[p,] * PreyAccess[,p])) #Total number of prey this pred pop has access to
+		PredEffectivePreyPop[p] <<- effectivePreyPop
+		lmult <- exp(EffConst * RDFuncResp(effectivePreyPop,PopVars[[2]]$popAbundTot[p],alpha,htime)) * PredRnoprey    # compute expected lambda(dominant eigenvalue) for this year
+
+			# // from Pred_R := exp(EffConst * RDFuncResp(PreyPop,PredPop,alpha,htime)) / exp(mu);
+
+			# // NOTE: This equation assumes that the eigenvalue of the PREDATOR stage matrix is 1.0,
+			# // and all stage matrix elements are proportionally affected by predation.  
+			# // Thus, lMult is the eigenvalue of the predator stage matrix at this time step.  
+			# // If the user specified an Rmax, lMult should not be larger than Rmax (Rmax must be >1)
+
+		if(lmult>PredRmax){
+			lmult <- PredRmax        # can't exceed maximum rate of growth (note: this allows predators to kill more prey than are used for predator growth)
+		}
+
+		New$Vital[p,,] <- as.matrix(predStMat)*lmult
+
+		#####           # // Finally, add ceiling-type density dependence (e.g., to simulate space limitation)  [crude initial attempt]
+		if(PopVars[[2]]$popAbundTot[p] > PredKcap){
+			New$Vital[p,,] <- as.matrix(New$Vital[p,,]) * ((PredKcap/PopVars[[2]]$popAbundTot[p]))       
+		}
+
+		PredVital[p] <<- New$Vital[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages-1]        # for CSV file
+		PreyConsumed[p] <<- RDFuncResp(effectivePreyPop,PopVars[[2]]$popAbundTot[p],alpha,htime) * PopVars[[2]]$popAbundTot[p]
+		#PredProduced[p] <<- (lmult * PopVars[[2]]$popAbundTot[p]) - PopVars[[2]]$popAbundTot[p]
+	}   # end loop through populations
+
+	if(flag==TRUE){     # if no errors, then return the new modifier object
+	# return(New)
+	# } else{
+		New <- ErrMsg     # otherwise, return the relevant error message(s)
+	}
+
+	#Stored[CurTimeStep[ID+1]+1,] <<- c(CurTimeStep[ID+1], sum(PopVars[[1]]$popAbundTot), sum(PopVars[[2]]$popAbundTot), 
+	#                                   PreyVital, New$Vital[1,GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages])
+
+	#write.csv(Stored,"PredPreyResults.csv",row.names=FALSE)
+
+	ExportDataToCSV(ID)
+
+	return(New)
 }
 
 ExportDataToCSV <- function(ID){
-     
-     # #Store individual prey populations
-     # for(p in 1:GlobalVars[[1]]$nPopulations){
-          # StoredPops[StoredPopsCurrentRow,] <<- c(CurTimeStep[ID+1], 
-                                                  # paste("Prey ",p),
-                                                  # PopVars[[1]]$popAbundTot[p],
-                                                  # PreyVital[p],
-                                                  # PreyEffectivePredPop[p],
-                                                  # "",
-                                                  # ""
-                                                  # )
-          # StoredPopsCurrentRow <<- StoredPopsCurrentRow + 1
-     # }
-     
+ 
+	if(CurTimeStep[ID+1]==0){
+			#name the csv output files
+		filenamePop <<- paste("PredPreyResults_BFFTest1_Pops ",datetime,".csv",sep="")
+		filenameTot <<- paste("PredPreyResults_BFFTest1_Totals ",datetime,".csv",sep="")
+
+            # clear the csv files in preparation for inputs (only relevant if time not used in name...)
+		#temp <- data.frame()
+		#write.table(x=temp,file=filenamePop,sep=",",append=F,row.names=FALSE)  # clear previous file
+        #write.table(x=temp,file=filenameTot,sep=",",append=F,row.names=FALSE)  # clear previous file		
+	}
+ 
      #Store individual pred populations
-     for(p in 1:GlobalVars[[ID+1]]$nPopulations){
-          StoredPops[StoredPopsCurrentRow,] <<- c(CurTimeStep[ID+1], 
-                                                  paste("Predator ",p),
-                                                  PopVars[[2]]$popAbundTot[p],
-                                                  PredVital[p],
-                                                  PredEffectivePreyPop[p],
-                                                  PreyConsumed[p]
-                                                  #PredProduced[p]
-                                                  )
-          StoredPopsCurrentRow <<- StoredPopsCurrentRow + 1
-     }
+     #for(p in 1:GlobalVars[[ID+1]]$nPopulations){
+
+	StoredPops <<- data.frame(
+								timestep   =rep(CurTimeStep[ID+1] + 1,times=GlobalVars[[ID+1]]$nPopulations), 
+								predpop    =paste("Predator ",c(1:GlobalVars[[ID+1]]$nPopulations),sep=" "),
+								predabund  =PopVars[[2]]$popAbundTot,
+								predsurv   =PredVital,
+						  #PredEffectivePreyPop[p],
+								preykilled =PreyConsumed
+						  #PredProduced[p]
+						)
+						
+     #}
      
      #Store totals
-     StoredTotal[CurTimeStep[ID+1]+1,] <<- c(CurTimeStep[ID+1] + 1, 
-                                             sum(PopVars[[1]]$popAbundTot),       # mp abundance, prey  
-                                             sum(PopVars[[2]]$popAbundTot),       # mp abundance, pred
-                                             mean(PreyVital),                     # adult survival, prey
-                                             mean(PredVital)                     # adult survival, pred
-											 #sum(PopVars[[1]]$popK),              # carrying capacity, prey
-											 #sum(PopVars[[2]]$popK)               # carrying capacity, pred
-											 )
+	StoredTotal <<- data.frame(
+									timestep      = CurTimeStep[ID+1] + 1, 
+                                    totabundprey  = sum(PopVars[[1]]$popAbundTot),       # mp abundance, prey  
+                                    totabundpred  = sum(PopVars[[2]]$popAbundTot),       # mp abundance, pred
+                                    meansurvprey  = mean(PreyVital),                     # adult survival, prey
+                                    meansurvpred  = mean(PredVital),                      # adult survival, pred
+									Kprey         = sum(PopVars[[1]]$popK),              # total carrying capacity, prey
+									Kpred         = sum(PopVars[[2]]$popK)               # carrying capacity, pred
+								)
      #if(CurTimeStep[ID+1]+1 >= nYears) {
      #     StoredTotal[nYears+1,] <<- colMeans(StoredTotal, na.rm = TRUE)
      #}
      
      #Write csv files
-     filename <- paste("PredPreyResults_BFFTest1_Pops ",datetime,".csv",sep="")
-     write.csv(StoredPops,filename,row.names=FALSE)
-     
-     filename <- paste("PredPreyResults_BFFTest1_Totals ",datetime,".csv",sep="")
-     write.csv(StoredTotal,filename,row.names=FALSE)
+	if(CurTimeStep[ID+1]==0){
+		write.table(StoredPops,filenamePop,sep=",",append=T,row.names=FALSE,col.names=TRUE)  
+		write.table(StoredTotal,filenameTot,sep=",",append=T,row.names=FALSE,col.names=TRUE)
+	}else{
+		write.table(StoredPops,filenamePop,sep=",",append=T,row.names=FALSE,col.names=FALSE)  
+		write.table(StoredTotal,filenameTot,sep=",",append=T,row.names=FALSE,col.names=FALSE)			
+	}
 }
 
 

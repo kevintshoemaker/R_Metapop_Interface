@@ -117,38 +117,20 @@ StartSimulation <- function(MetapopStateVarsGlobal,ClientID){      # ClientID id
 	 
 	 
 		 ###################################
-	####### SET UP STORAGE STRUCTURE 
+	####### SET UP STORAGE VARIABLES 
 	
 	if(ClientID==1){      # if final model is being read in... then set up storage structure.
 
 		datetime <<- format(Sys.time(), "%a %b %d %Y %H%M")
 		nYears <<- GlobalVars[[ClientID+1]]$nYears
 
-		# StoredPops <<- data.frame(Year=NA,
-								 # Name=NA,
-								 # Population=NA,
-								 # Growth=NA,
-								 # EffectivePop=NA,
-								 # PreyConsumed=NA,
-								 # PredProduced=NA
-								 # ) 
-		# StoredPopsCurrentRow <- 1
-		
-		StoredTotal <<- data.frame(Year=NA,
-								  PreyTotal=NA,
-								  PredTotal=NA,
-								  PreyAvgGrowth=NA,
-								  PredAvgGrowth=NA,
-								  PreyK=NA,
-								  PredK=NA
-								 ) 
 		PreyVital <<- array(0,dim=GlobalVars[[1]]$nPopulations)
 		PredVital <<- array(0,dim=GlobalVars[[2]]$nPopulations)
-		PreyConsumed <<- array(0,dim=2)
-		PredProduced <<- array(0,dim=2)
+		PreyConsumed <<- array(0,dim=GlobalVars[[2]]$nPopulations)
+		 #PredProduced <<- array(0,dim=2)
 
-		PreyEffectivePredPop <<- array(0,dim=GlobalVars[[2]]$nPopulations)
-		PredEffectivePreyPop <<- array(0,dim=GlobalVars[[1]]$nPopulations)
+		PreyEffectivePredPop <<- array(0,dim=GlobalVars[[1]]$nPopulations)     # for each prey population, the abundance of predators feeding upon it
+		PredEffectivePreyPop <<- array(0,dim=GlobalVars[[2]]$nPopulations)     # for each pred population, the abundance of prey available to it
 		 
 	}
      
@@ -169,13 +151,13 @@ StartTimeStep <- function(ClientID){
      AllModifiers[[ClientID+1]]$Timestep <<- as.integer(CurTimeStep[ClientID+1])   # last time step for which complete information is available
      
      ############  TEST #1: simply modify predator K based on prey abundance:  
-     if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModKTest1(AllModifiers[[ClientID+1]],ClientID)   # update the Modifier for this Client ID
-     if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModKTest2(AllModifiers[[ClientID+1]],ClientID)  #ModVitalTest1(AllModifiers[[ClientID+1]],ClientID)
+     #if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModKTest1(AllModifiers[[ClientID+1]],ClientID)   # update the Modifier for this Client ID
+     #if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModKTest2(AllModifiers[[ClientID+1]],ClientID)  #ModVitalTest1(AllModifiers[[ClientID+1]],ClientID)
      ########################
      
      ############  TEST #2: implement Resit's suggested predator prey model
-     #if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModVitalPrey1(AllModifiers[[ClientID+1]],ClientID)  # Update Prey
-     #if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModVitalPred1(AllModifiers[[ClientID+1]],ClientID)  # Update Predator
+     if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModVitalPrey1(AllModifiers[[ClientID+1]],ClientID)  # Update Prey
+     if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModVitalPred1(AllModifiers[[ClientID+1]],ClientID)  # Update Predator
      ############ 
      
      a <- list(result=is.numeric(ClientID),modifier=AllModifiers[[ClientID+1]])
