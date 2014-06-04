@@ -8,6 +8,7 @@ suppressWarnings(require( "stats", quietly = TRUE ))
 ######## FIX FUNCTIONS TO PROPERLY HANDLE ARRAYS AND MATRICES.... (modified from RJSONIO package)
 
 options(useFancyQuotes = FALSE)
+options(scipen=10)
  
 temp1 <- setMethod(f="toJSON", signature="matrix",
            definition=function(x, container =  isContainer(x, asIs, .level), collapse = " ", ...,   # was collapse = "\n"

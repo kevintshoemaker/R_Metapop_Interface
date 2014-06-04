@@ -80,18 +80,18 @@
 
  # // PreyRmax (max growth rate) and PreyKcap are assumed to be those when there is no predation
 PreyRmax <- 1.2      # Rmax for prey  (no predation)
-PreyKcap <- 2000000      #  K for prey (no predation)
+PreyKcap <- 1000000      #  K for prey (no predation)
 
-PredRmax <- 1.2      # Rmax for predator population when glutted with prey resources. 
+PredRmax <- 1.5    # Rmax for predator population when glutted with prey resources. 
 PredKcap <- 250      # predator carrying capacity, when glutted with prey resources. 
 
-PredRnoprey <- 0.3   # "Rmax" for predator (no prey available, must be less than 1 but greater than zero)
+PredRnoprey <- 0.1   # "Rmax" for predator (no prey available, must be less than 1 but greater than zero)
  
 maxSurvival <- 0.99   # Maximum survival rate
 
  # # // alpha: slope of the function at origin; the rate at which the prey population is made available
  # # //        to the predator population: the prey death rate due to predation cannot exceed alpha
-alpha <-  0.25      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
+alpha <-  0.5      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
 
  # # // htime: handling time; 1/asymptote
 MaxKill   <- 1000     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
@@ -100,7 +100,7 @@ htime <-  1 / MaxKill      #  "handling time": mean time spent between kills whe
                      # KTS: we should really turn this into a fecundity-related term. Literally, how many offspring can be generated
 					        # at different consumption levels. Alternatively, we could generate a series of stage matrices
 							# representing low and high survivals/fecundities representing various consumption levels.
-EffConst <- 0.1   #   0.02  # this term translates consumption rates (functional response) to predator lambda. That is, converts the functional response to a numerical response.  
+EffConst <- 0.05   #   0.02  # this term translates consumption rates (functional response) to predator lambda. That is, converts the functional response to a numerical response.  
 
  # #Rows = Predator populations, Cols = Prey Populations, percent of that pred pop that feed on that prey pop
  # #PredFeed <- matrix(0, nrow=GlobalVars[[2]]$nPopulations, ncol=GlobalVars[[1]]$nPopulations)
@@ -412,6 +412,7 @@ ModVitalPrey1 <- function(Old, ID){
 		New$Vital[p,,] <- as.matrix(preyStMat) * lmult
 
 		PreyVital[p] <<- New$Vital[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages-1]   # store adult survival rate for CSV file
+		PreyGrowth[p] <<- eigen(as.matrix(New$Vital[p, , ]))$values[1]
 	}  ## end loop through populations
      
 	if(flag==TRUE){     # if no errors, then return the new modifier object
@@ -498,6 +499,7 @@ ModVitalPred1 <- function(Old, ID){
 		}
 
 		PredVital[p] <<- New$Vital[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages-1]        # for CSV file
+		PredGrowth[p] <<- eigen(as.matrix(New$Vital[p, , ]))$values[1]    # for CSV file
 		PreyConsumed[p] <<- RDFuncResp(effectivePreyPop,PopVars[[2]]$popAbundTot[p],alpha,htime) * PopVars[[2]]$popAbundTot[p]
 		#PredProduced[p] <<- (lmult * PopVars[[2]]$popAbundTot[p]) - PopVars[[2]]$popAbundTot[p]
 	}   # end loop through populations
@@ -539,6 +541,7 @@ ExportDataToCSV <- function(ID){
 								predpop    =paste("Predator ",c(1:GlobalVars[[ID+1]]$nPopulations),sep=" "),
 								predabund  =PopVars[[2]]$popAbundTot,
 								predsurv   =PredVital,
+								predgrowth = PredGrowth,
 						  #PredEffectivePreyPop[p],
 								preykilled =PreyConsumed
 						  #PredProduced[p]
@@ -553,6 +556,8 @@ ExportDataToCSV <- function(ID){
                                     totabundpred  = sum(PopVars[[2]]$popAbundTot),       # mp abundance, pred
                                     meansurvprey  = mean(PreyVital),                     # adult survival, prey
                                     meansurvpred  = mean(PredVital),                      # adult survival, pred
+									meanpreygrow  = mean(PreyGrowth),
+									meanpredgrow  = mean(PredGrowth),
 									Kprey         = sum(PopVars[[1]]$popK),              # total carrying capacity, prey
 									Kpred         = sum(PopVars[[2]]$popK)               # carrying capacity, pred
 								)

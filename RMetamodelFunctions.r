@@ -126,6 +126,8 @@ StartSimulation <- function(MetapopStateVarsGlobal,ClientID){      # ClientID id
 
 		PreyVital <<- array(0,dim=GlobalVars[[1]]$nPopulations)
 		PredVital <<- array(0,dim=GlobalVars[[2]]$nPopulations)
+		PreyGrowth <<- array(0,dim=GlobalVars[[1]]$nPopulations)
+		PredGrowth <<- array(0,dim=GlobalVars[[2]]$nPopulations)
 		PreyConsumed <<- array(0,dim=GlobalVars[[2]]$nPopulations)
 		 #PredProduced <<- array(0,dim=2)
 
