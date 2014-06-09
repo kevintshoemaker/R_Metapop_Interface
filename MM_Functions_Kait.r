@@ -1,5 +1,12 @@
-##### NOTES: 
 
+#### NOTES: 
+
+###   KTS: how does predRMax interact with effConst??   Do we need a predRMax term???
+####     maybe a ceiling model makes sense? if ferret density exceeds a threshold such that territoriality ensues, then limit reproduction
+####     based on the number of reproductive ferrets that can produce given the available area. 
+
+
+#### KTS: need to make sure we have a good ricker density dependence implementation for the metamodeling where vital rates are modified... 
 
 ################################
 #      MODIFIERS (for quick reference)
@@ -72,43 +79,43 @@
 ## note: ultimately these variables will be defined in MP manager...
 
 # // PreyRmax (max growth rate) and PreyKcap are assumed to be those when there is no predation
-PreyRmax <- 2.44      # Rmax for prey  (no predation)
-PreyKcap <- 230000      #  K for prey (no predation)
+ PreyRmax <- 1.3      # Rmax for prey  (no predation)
+ PreyKcap <- 200000      #  K for prey (no predation)
 
-PredRmax <- 1.6      # Rmax for predator population when glutted with prey resources. 
-PredKcap <- 1000      # predator carrying capacity, when glutted with prey resources. 
+ PredRmax <- 1.2      # Rmax for predator population when glutted with prey resources. 
+ PredKcap <- 1000      # predator carrying capacity, when glutted with prey resources. 
 
-PredRnoprey <- 0.1   # "Rmax" for predator (no prey available, must be less than 1)
+ PredRnoprey <- 0.03   # "Rmax" for predator (no prey available, must be less than 1)
 
-# // alpha: slope of the function at origin; the rate at which the prey population is made available
-# //        to the predator population: the prey death rate due to predation cannot exceed alpha
-alpha <-  0.9 #1    # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
+# # // alpha: slope of the function at origin; the rate at which the prey population is made available
+# # //        to the predator population: the prey death rate due to predation cannot exceed alpha
+ alpha <-  0.5      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
 
-# // htime: handling time; 1/asymptote
-MaxKill   <- 1000     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
-htime <-  1 / MaxKill      #  "handling time": mean time spent between kills when prey abundance greatly exceeds predator abundance.    
+# # // htime: handling time; 1/asymptote
+ MaxKill   <- 100     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
+ htime <-  1 / MaxKill      #  "handling time": mean time spent between kills when prey abundance greatly exceeds predator abundance.    
 
-# link predator populations to prey populations
+# # link predator populations to prey populations
 
-predPops <- 1 #c(1,2)   # for now, assume 2 prey pops, both of which are accessed by the predator population
+ predPops <- c(1)   # for now, assume 2 prey pops, both of which are accessed by the predator population
 
-EffConst <- 0.1   #   0.02  # for now, assume about 4 predators created at maximum consumption levels 
+ EffConst <- 0.05   #   0.02  # for now, assume about 4 predators created at maximum consumption levels 
 
-#Rows = Predator populations, Cols = Prey Populations, percent of that pred pop that feed on that prey pop
-#PredFeed <- matrix(0, nrow=GlobalVars[[2]]$nPopulations, ncol=GlobalVars[[1]]$nPopulations)
+# #Rows = Predator populations, Cols = Prey Populations, percent of that pred pop that feed on that prey pop
+# #PredFeed <- matrix(0, nrow=GlobalVars[[2]]$nPopulations, ncol=GlobalVars[[1]]$nPopulations)
 PredFeed <- matrix(0,nrow=1,ncol=1)
 PredFeed[1,1] <- 1
 #PredFeed[1,2] <- .6
 #PredFeed[2,1] <- 0
-#PredFeed[2,2] <- 1
+# #PredFeed[2,2] <- 1
 
-#Rows = Prey Populations, Cols = Predator populations, percent of that prey pop that pred pop has access to
-#PreyAccess <- matrix(0, nrow=GlobalVars[[1]]$nPopulations, ncol=GlobalVars[[2]]$nPopulations)
-PreyAccess <- matrix(0,nrow=1,ncol=1)
-PreyAccess[1,1] <- 1
-#PreyAccess[1,2] <- 0
-#PreyAccess[2,1] <- .7
-#PreyAccess[2,2] <- .3
+# #Rows = Prey Populations, Cols = Predator populations, percent of that prey pop that pred pop has access to
+# #PreyAccess <- matrix(0, nrow=GlobalVars[[1]]$nPopulations, ncol=GlobalVars[[2]]$nPopulations)
+ PreyAccess <- matrix(0,nrow=1,ncol=1)
+ PreyAccess[1,1] <- 1
+# #PreyAccess[1,2] <- 0
+# #PreyAccess[2,1] <- .7
+# #PreyAccess[2,2] <- .3
 
 
 QuasiExtinction_prey <- 100
@@ -268,27 +275,22 @@ ModKTest2 <- function(Old, ID){            # first attempt at real metamodeling 
      return(New)
 }
 
-ModKTest3 <- function(Old, ID){  # prey pop with no modification
+
+ModKPrey1 <- function(Old, ID){
      New <- Old
-     #New$ChangeK <- TRUE
-	 New$ChangeK <- FALSE
-     for(p in 1:GlobalVars[[ID+1]]$nPopulations) {
-     	newK <- Old #1000000 #floor(sum(PopVars[[1]]$popAbundTot)+100)
-     	New$K[p] <- newK #rep(newK,times=GlobalVars[[ID+1]]$nPopulations) 
-     	PreyVital[p] <<- PopVars[[ID+1]]$popStMat[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages] 
-     }
+     ######  DO NOTHING TO THE PREY MODEL...  no modifier is turned on
+     # New$ChangeK <- FALSE
+     # newK <- 1000 + CurTimeStep[ID+1]*100
+     # New$K <- rep(newK,times=GlobalVars[[ID+1]]$nPopulations) 
      return(New)
 }
 
-ModKTest4 <- function(Old, ID) {    #attempt to modify pred K on basis of total prey abundance (1/766 of total PDog abund)
+ModKPred1 <- function(Old, ID){            # first attempt at real metamodeling (trivial example: modify K based on abundance of other species)
      New <- Old
      New$ChangeK <- TRUE
-     for(p in 1:GlobalVars[[ID+1]]$nPopulations) {
-     	newK <- floor(sum(PopVars[[1]]$popAbundTot)/766)
-     	New$K[p] <- newK #rep(newK, times=GlobalVars[[ID+1]]$nPopulations)
-    	PredVital[p] <<- PopVars[[ID+1]]$popStMat[p, GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages]      
-     }     
-     ExportDataToCSV(ID)     
+     newK <- round(sum(PopVars[[1]]$popAbundTot)/766)          # set predator carrying capacity nased on prey abundance in Population 1
+     New$K <- rep(newK,times=GlobalVars[[2]]$nPopulations) 
+	 ExportDataToCSV(ID)
      return(New)
 }
 
@@ -354,14 +356,14 @@ ModVitalPrey1 <- function(Old, ID){
 		  
 		  
           if(length(which(TotalSurv>(1+tol)))>0) {      #### THIS SEEMS STRANGE: high survival stages will routinely throw this error, right!
-               target <- 0.99999
-			   SurvMult <- ifelse(TotalSurv>1, target/TotalSurv, 1)
-			   multMat <- matrix(rep(SurvMult, times = nrow(preyStMat)), nrow = nrow(preyStMat), ncol = ncol(preyStMat), byrow = TRUE) * as.matrix(GlobalVars[[ID+1]]$constraintsMat) + (1-as.matrix(GlobalVars[[ID+1]]$constraintsMat))
-			   preyStMat <- as.matrix(preyStMat) * multMat
+			#target <- 0.99999
+			   #SurvMult <- ifelse(TotalSurv>1, target/TotalSurv, 1)
+			   #multMat <- matrix(rep(SurvMult, times = nrow(preyStMat)), nrow = nrow(preyStMat), ncol = ncol(preyStMat), byrow = TRUE) * as.matrix(GlobalVars[[ID+1]]$constraintsMat) + (1-as.matrix(GlobalVars[[ID+1]]$constraintsMat))
+			   #preyStMat <- as.matrix(preyStMat) * multMat
 			  
-				#flag <<- TRUE
-				#ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
-				#break
+		flag <<- TRUE
+		ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
+		break
           } 
           
           # if(length(which(TotalSurv<0.999999))>0) {throw error} # KTS: I'm not sure why this is an error condition
@@ -523,22 +525,23 @@ ExportDataToCSV <- function(ID){
      #}
      
      #Store totals
-     StoredTotal[CurTimeStep[ID+1]+1,] <<- c(CurTimeStep[ID+1], 
+     StoredTotal[CurTimeStep[ID+1]+1,] <<- c(CurTimeStep[ID+1] + 1, 
                                              sum(PopVars[[1]]$popAbundTot),
                                              sum(PopVars[[2]]$popAbundTot),
-					     sum(PopVars[[1]]$popK),
-					     sum(PopVars[[2]]$popK),
                                              mean(PreyVital),
-                                             mean(PredVital))
-     if(CurTimeStep[ID+1]+1 >= nYears) {
-          StoredTotal[nYears+1,] <<- colMeans(StoredTotal, na.rm = TRUE)
-     }
+                                             mean(PredVital),
+											 sum(PopVars[[1]]$popK),
+											 sum(PopVars[[2]]$popK)
+											 )
+     #if(CurTimeStep[ID+1]+1 >= nYears) {
+     #     StoredTotal[nYears+1,] <<- colMeans(StoredTotal, na.rm = TRUE)
+     #}
      
      #Write csv files
-     #filename <- paste("PredPreyResults_MultPopStep4_Pops ",datetime,".csv",sep="")
-     #write.csv(StoredPops,filename,row.names=FALSE)
+     # filename <- paste("PredPreyResults_BFFTest1_Pops ",datetime,".csv",sep="")
+     # write.csv(StoredPops,filename,row.names=FALSE)
      
-     filename <- paste("PredPreyResults_MultPopStep4_Totals ",datetime,".csv",sep="")
+     filename <- paste("PredPreyResults_BFFTest1_Totals ",datetime,".csv",sep="")
      write.csv(StoredTotal,filename,row.names=FALSE)
 }
 
