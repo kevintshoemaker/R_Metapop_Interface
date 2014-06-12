@@ -8,6 +8,7 @@ suppressWarnings(require( "stats", quietly = TRUE ))
 ######## FIX FUNCTIONS TO PROPERLY HANDLE ARRAYS AND MATRICES.... (modified from RJSONIO package)
 
 options(useFancyQuotes = FALSE)
+options(scipen=10)
  
 temp1 <- setMethod(f="toJSON", signature="matrix",
            definition=function(x, container =  isContainer(x, asIs, .level), collapse = " ", ...,   # was collapse = "\n"
@@ -176,17 +177,8 @@ listToMat <- function(inp){
 
   # read in the functions to be used... (may be stored in separate files...)
 
-#source("C:\\Users\\Kevin\\Documents\\Employment\\Stony Brook\\MetaModels\\MPM Repository\\R_JSON_Server\\RMetamodelFunctions.r")
-#source("C:\\Users\\Kevin\\Documents\\Employment\\Stony Brook\\MetaModels\\MPM Repository\\R_JSON_Server\\MM_Functions.r")
-
 source("C:\\Users\\Kait\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\RMetamodelFunctions_Kait.r")
 source("C:\\Users\\Kait\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\MM_Functions_Kait.r")
-
-#source("C:\\Users\\Kevin\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\RMetamodelFunctions_Kait.r")
-#source("C:\\Users\\Kevin\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\MM_Functions_Kait.r")
-#source(file.path(getwd() ,"R_JSON_Server\\MM_Functions.r"))
-#source("C:\\DATA\\RAMAS\\R_JSON_Server\\RMetamodelFunctions.r")
-#source("C:\\DATA\\RAMAS\\R_JSON_Server\\MM_Functions.r")
 
 
 ###########################################

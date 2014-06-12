@@ -27,6 +27,7 @@ CurTimeStep <- numeric(0)
 ExtinctFlag <- logical(0)
 
 ####################################################
+#                       DEFINE ALL METAPOP RPC PROCEDURES: Initialize, StartSimulation, StartTimeStep, StopTimeStep, StopSimulation, Finalize
 ##############################
 #                       "INITIALIZE" routine: initiate this MP instance
 
@@ -58,11 +59,6 @@ Initialize <- function(ClientID){
 #  - return True to continue, return False to cancel
 
 StartSimulation <- function(MetapopStateVarsGlobal,ClientID){      # ClientID identifies the instance of Metapop
-
-	#sink("dump.txt")
-	#dput(MetapopStateVarsGlobal)
-	#sink()
-
      GlobalVars[[ClientID+1]] <<- MetapopStateVarsGlobal   # save current global state vars to global workspace
      
      #################  Convert matrices and arrays back to original format... [shouldn't have to do this, but for now...]
@@ -79,7 +75,7 @@ StartSimulation <- function(MetapopStateVarsGlobal,ClientID){      # ClientID id
      
      AllModifiers[[ClientID+1]]$ChangeAbund <<- FALSE
      AllModifiers[[ClientID+1]]$ChangeVital <<- FALSE
-     AllModifiers[[ClientID+1]]$ChangeK     <<- FALSE   #   FALSE   #  
+     AllModifiers[[ClientID+1]]$ChangeK     <<- FALSE   #   FALSE   #   
      AllModifiers[[ClientID+1]]$ChangeDisp  <<- FALSE
      
      
@@ -119,44 +115,25 @@ StartSimulation <- function(MetapopStateVarsGlobal,ClientID){      # ClientID id
      #       dispersal. [[this should probably be tabled for now, until we can
      #       clarify the details]]
      AllModifiers[[ClientID+1]]$Disp  <<- numeric(GlobalVars[[ClientID+1]]$nPopulations)
-     
+	 
 	 
 		 ###################################
-	####### SET UP STORAGE STRUCTURE 
+	####### SET UP STORAGE VARIABLES 
 	
 	if(ClientID==1){      # if final model is being read in... then set up storage structure.
 
 		datetime <<- format(Sys.time(), "%a %b %d %Y %H%M")
-		#sink("dump.txt")
-		#dput(GlobalVars[[1]])
-		#sink()
 		nYears <<- GlobalVars[[ClientID+1]]$nYears
 
-		# StoredPops <<- data.frame(Year=NA,
-								 # Name=NA,
-								 # Population=NA,
-								 # Growth=NA,
-								 # EffectivePop=NA,
-								 # PreyConsumed=NA,
-								 # PredProduced=NA
-								 # ) 
-		# StoredPopsCurrentRow <- 1
-		
-		StoredTotal <<- data.frame(Year=NA,
-								  PreyTotal=NA,
-								  PredTotal=NA,
-								  PreyAvgGrowth=NA,
-								  PredAvgGrowth=NA,
-								  PreyK=NA,
-								  PredK=NA
-								 ) 
 		PreyVital <<- array(0,dim=GlobalVars[[1]]$nPopulations)
 		PredVital <<- array(0,dim=GlobalVars[[2]]$nPopulations)
-		PreyConsumed <<- array(0,dim=2)
-		PredProduced <<- array(0,dim=2)
+		PreyGrowth <<- array(0,dim=GlobalVars[[1]]$nPopulations)
+		PredGrowth <<- array(0,dim=GlobalVars[[2]]$nPopulations)
+		PreyConsumed <<- array(0,dim=GlobalVars[[2]]$nPopulations)
+		 #PredProduced <<- array(0,dim=2)
 
-		PreyEffectivePredPop <<- array(0,dim=GlobalVars[[2]]$nPopulations)
-		PredEffectivePreyPop <<- array(0,dim=GlobalVars[[1]]$nPopulations)
+		PreyEffectivePredPop <<- array(0,dim=GlobalVars[[1]]$nPopulations)     # for each prey population, the abundance of predators feeding upon it
+		PredEffectivePreyPop <<- array(0,dim=GlobalVars[[2]]$nPopulations)     # for each pred population, the abundance of prey available to it
 		 
 	}
      
@@ -177,16 +154,13 @@ StartTimeStep <- function(ClientID){
      AllModifiers[[ClientID+1]]$Timestep <<- as.integer(CurTimeStep[ClientID+1])   # last time step for which complete information is available
      
      ############  TEST #1: simply modify predator K based on prey abundance:  
-     if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModKTest1(AllModifiers[[ClientID+1]],ClientID)   # update the Modifier for this Client ID
-     if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModKTest2(AllModifiers[[ClientID+1]],ClientID)  #ModVitalTest1(AllModifiers[[ClientID+1]],ClientID)
-     
-     #if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModKTest3(AllModifiers[[ClientID+1]],ClientID) 
-     #if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModKTest4(AllModifiers[[ClientID+1]],ClientID)
+     #if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModKTest1(AllModifiers[[ClientID+1]],ClientID)   # update the Modifier for this Client ID
+     #if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModKTest2(AllModifiers[[ClientID+1]],ClientID)  #ModVitalTest1(AllModifiers[[ClientID+1]],ClientID)
      ########################
      
      ############  TEST #2: implement Resit's suggested predator prey model
-     #if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModVitalPrey1(AllModifiers[[ClientID+1]],ClientID)  # Update Prey
-     #if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModVitalPred1(AllModifiers[[ClientID+1]],ClientID)  # Update Predator
+     if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModVitalPrey1(AllModifiers[[ClientID+1]],ClientID)  # Update Prey
+     if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModVitalPred1(AllModifiers[[ClientID+1]],ClientID)  # Update Predator
      ############ 
      
      a <- list(result=is.numeric(ClientID),modifier=AllModifiers[[ClientID+1]])
@@ -293,7 +267,7 @@ StopSimulation <- function(ClientID){
           # Spec: actual or realized K (with stochasticity).
           #PopVars[[ClientID+1]]$popK2 <<- numeric(GlobalVars[[ClientID+1]]$nPopulations)
           
-          # Spec: Realized transition matrices, including stochasticity ?
+          # Spec: Realized transition matrices, including stochasticity …
           PopVars[[ClientID+1]]$popStMat2 <<- array(0,dim=c(GlobalVars[[ClientID+1]]$nPopulations,GlobalVars[[ClientID+1]]$nStages,GlobalVars[[ClientID+1]]$nStages))
           
           
@@ -343,3 +317,72 @@ Finalize <- function(ClientID){
 
 ######################################
 #######   END DEFINITIONS Of RPC PROCEDURES
+
+
+
+
+
+
+################################################
+#######################   LOAD GENERIC ANCILLARY FUNCTIONS FOR METAMODELING WITH RAMAS...
+
+
+      # function for truncating to a certain decimal place
+trunc <- function(x, ..., prec = 0) base::trunc(x * 10^prec, ...) / 10^prec;
+
+preComputeSMs <- function(MinMat,BaselineMat,MaxMat,decimals=1){
+  returnobj <- list()
+  minLambda <- as.numeric(eigen(MinMat)$values[1])
+  maxLambda <- as.numeric(eigen(MaxMat)$values[1])
+  baselineLambda <- as.numeric(eigen(BaselineMat)$values[1])    
+  targets <- seq(trunc(minLambda,prec=decimals),round(maxLambda,decimals),by=.1)   # target lambda values...
+  selected <- list()
+
+  temp <- list()
+  matrixgen <- length(targets)*50
+  halfgen <- floor(matrixgen/2)  
+  temp2 <- numeric(matrixgen)
+
+  daddymat <- array(0,dim=c(nrow(MinMat),ncol(MinMat),matrixgen))  
+      # determine the range of values for each matrix element
+  for(i in 1:nrow(MinMat)){
+    for(j in 1:ncol(MinMat)){
+	  daddymat[i,j,1:halfgen] <- seq(from=MinMat[i,j],to=BaselineMat[i,j],length=halfgen)
+	}
+  }
+  for(i in 1:nrow(MinMat)){
+    for(j in 1:ncol(MinMat)){
+	  daddymat[i,j,(halfgen+1):matrixgen] <- seq(from=BaselineMat[i,j],to=MaxMat[i,j],length=length((halfgen+1):matrixgen))
+	}
+  }
+      # generate a bunch of plausible matrices for matching with the target lambda values
+  for(m in 1:matrixgen){
+    temp[[m]] <- daddymat[,,m]
+    temp2[m] <- as.numeric(eigen(temp[[m]])$values[1])	
+  }
+ 
+      # select one matrix for each target lambda value
+  for(t in 1:length(targets)){
+     ndx <- which(abs(round(temp2,decimals)-targets[t])<(1/(decimals*10*2)))
+	 if(length(ndx)>0){
+	   select <- sample(ndx,1)
+	   selected[[t]] <- temp[[select]]
+	 }
+  }  
+  returnobj$StMats <- selected
+  returnobj$Lambdas <- targets  
+  return(returnobj)
+}
+
+
+
+#################################################
+
+
+
+
+
+
+
+
+
