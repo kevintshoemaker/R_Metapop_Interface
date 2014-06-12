@@ -27,6 +27,7 @@ CurTimeStep <- numeric(0)
 ExtinctFlag <- logical(0)
 
 ####################################################
+#                       DEFINE ALL METAPOP RPC PROCEDURES: Initialize, StartSimulation, StartTimeStep, StopTimeStep, StopSimulation, Finalize
 ##############################
 #                       "INITIALIZE" routine: initiate this MP instance
 
@@ -316,3 +317,72 @@ Finalize <- function(ClientID){
 
 ######################################
 #######   END DEFINITIONS Of RPC PROCEDURES
+
+
+
+
+
+
+################################################
+#######################   LOAD GENERIC ANCILLARY FUNCTIONS FOR METAMODELING WITH RAMAS...
+
+
+      # function for truncating to a certain decimal place
+trunc <- function(x, ..., prec = 0) base::trunc(x * 10^prec, ...) / 10^prec;
+
+preComputeSMs <- function(MinMat,BaselineMat,MaxMat,decimals=1){
+  returnobj <- list()
+  minLambda <- as.numeric(eigen(MinMat)$values[1])
+  maxLambda <- as.numeric(eigen(MaxMat)$values[1])
+  baselineLambda <- as.numeric(eigen(BaselineMat)$values[1])    
+  targets <- seq(trunc(minLambda,prec=decimals),round(maxLambda,decimals),by=.1)   # target lambda values...
+  selected <- list()
+
+  temp <- list()
+  matrixgen <- length(targets)*50
+  halfgen <- floor(matrixgen/2)  
+  temp2 <- numeric(matrixgen)
+
+  daddymat <- array(0,dim=c(nrow(MinMat),ncol(MinMat),matrixgen))  
+      # determine the range of values for each matrix element
+  for(i in 1:nrow(MinMat)){
+    for(j in 1:ncol(MinMat)){
+	  daddymat[i,j,1:halfgen] <- seq(from=MinMat[i,j],to=BaselineMat[i,j],length=halfgen)
+	}
+  }
+  for(i in 1:nrow(MinMat)){
+    for(j in 1:ncol(MinMat)){
+	  daddymat[i,j,(halfgen+1):matrixgen] <- seq(from=BaselineMat[i,j],to=MaxMat[i,j],length=length((halfgen+1):matrixgen))
+	}
+  }
+      # generate a bunch of plausible matrices for matching with the target lambda values
+  for(m in 1:matrixgen){
+    temp[[m]] <- daddymat[,,m]
+    temp2[m] <- as.numeric(eigen(temp[[m]])$values[1])	
+  }
+ 
+      # select one matrix for each target lambda value
+  for(t in 1:length(targets)){
+     ndx <- which(abs(round(temp2,decimals)-targets[t])<(1/(decimals*10*2)))
+	 if(length(ndx)>0){
+	   select <- sample(ndx,1)
+	   selected[[t]] <- temp[[select]]
+	 }
+  }  
+  returnobj$StMats <- selected
+  returnobj$Lambdas <- targets  
+  return(returnobj)
+}
+
+
+
+#################################################
+
+
+
+
+
+
+
+
+
