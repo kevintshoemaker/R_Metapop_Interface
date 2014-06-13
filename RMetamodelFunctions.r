@@ -335,7 +335,7 @@ preComputeSMs <- function(MinMat,BaselineMat,MaxMat,decimals=1){
   minLambda <- as.numeric(eigen(MinMat)$values[1])
   maxLambda <- as.numeric(eigen(MaxMat)$values[1])
   baselineLambda <- as.numeric(eigen(BaselineMat)$values[1])    
-  targets <- seq(trunc(minLambda,prec=decimals),round(maxLambda,decimals),by=.1)   # target lambda values...
+  targets <- seq(trunc(minLambda,prec=decimals),round(maxLambda,decimals),by=(1/(10^decimals)))   # target lambda values...
   selected <- list()
 
   temp <- list()

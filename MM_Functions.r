@@ -83,7 +83,7 @@ DEBUG = TRUE     # if true, writes out lots of messages to the dump file
 
  # // PreyRmax (max growth rate) and PreyKcap are assumed to be those when there is no predation
 PreyRmax <- 2.43      # Rmax for prey  (no predation)
-PreyKcap <- 1000000      #  K for prey (no predation)
+PreyKcap <- 500000      #  K for prey (no predation)
 
 PredRmax <- 1.9    # Rmax for predator population when glutted with prey resources. 
 PredKcap <- 1000      # predator carrying capacity, when glutted with prey resources. 
@@ -215,7 +215,7 @@ MaxPredMat <- as.matrix(read.csv("MaxPredMat.csv",header=F))
  #PreyLambdas <- numeric(0)
  #PreyStMats <- list()
  
-decimals <- 1
+decimals <- 2
 
 tempobj <- preComputeSMs(MinMat=MinPreyMat,BaselineMat=BaselinePreyMat,MaxMat=MaxPreyMat,decimals=decimals)   # for prey
 PreyLambdas <- tempobj$Lambdas
@@ -232,11 +232,11 @@ if(is.null(PredStMats[[length(PredLambdas)]])) PredStMats[[length(PredLambdas)]]
 ##################################
 #  PREDATOR PREY INTERACTION PARAMETERS
 
-PredRnoprey <- 0.01   # "Rmax" for predator (no prey available, must be less than 1 but greater than zero)
+PredRnoprey <- 0.2   # "Rmax" for predator (no prey available, must be less than 1 but greater than zero)
 
  # # // alpha: slope of the function at origin; the rate at which the prey population is made available
  # # //        to the predator population: the prey death rate due to predation cannot exceed alpha
-alpha <-  0.4      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
+alpha <-  0.2      # maximum proportion of the prey population that can be consumed (per time step) when predators far outnumber prey
 
  # # // htime: handling time; 1/asymptote
 MaxKill   <- 1000     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
@@ -245,7 +245,7 @@ htime <-  1 / MaxKill      #  "handling time": mean time spent between kills whe
                      # KTS: we should really turn this into a fecundity-related term. Literally, how many offspring can be generated
 					        # at different consumption levels. Alternatively, we could generate a series of stage matrices
 							# representing low and high survivals/fecundities representing various consumption levels.
-EffConst <- 0.02   #   0.02  # this term translates consumption rates (functional response) to predator lambda. That is, converts the functional response to a numerical response.  
+EffConst <- 0.01   #   0.02  # this term translates consumption rates (functional response) to predator lambda. That is, converts the functional response to a numerical response.  
 
  # #Rows = Predator populations, Cols = Prey Populations, percent of that pred pop that feed on that prey pop
  # #PredFeed <- matrix(0, nrow=GlobalVars[[2]]$nPopulations, ncol=GlobalVars[[1]]$nPopulations)
