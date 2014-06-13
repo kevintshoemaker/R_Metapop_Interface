@@ -776,7 +776,7 @@ ExportDataToCSV <- function(ID){
                                     meansurvprey  = mean(PreyVital),                     # adult survival, prey
                                     meansurvpred  = mean(PredVital),                      # adult survival, pred
 									meanpreygrow  = mean(PreyGrowth),
-									meanpredgrow  = mean(PredGrowth),
+									meanpredgrow  = mean(PredGrowth)
 									#Kprey         = sum(PopVars[[1]]$popK),              # total carrying capacity, prey
 									#Kpred         = sum(PopVars[[2]]$popK)               # carrying capacity, pred
 								)
