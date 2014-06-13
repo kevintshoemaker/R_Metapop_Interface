@@ -59,7 +59,7 @@
 # popHarvest: number of individuals harvested (array of dimension "nPopulations", "nStages")
 # popSupplement:  number of individuals supplemented (array of dimension "nPopulations", "nStages")
 # popK2: actual or realized K (with stochasticity).
-# popStMat2: Realized transition matrices, including stochasticity …
+# popStMat2: Realized transition matrices, including stochasticity ?
 # popAbundSt: Stage-specific abundances for each population (matrix of dimension "nPopulations","nStages")  [[modifications result in specification of "abundance modifier" ]]
 # popStMat: Mean transition matrices for each population (array of dimension "nPopulations", "nStages", "nStages")   [[modifications result in specification of "vital rate modifier"]]
 # popK: Mean population-specific carrying capacity (vector of length "nPopulations").  [[modifications result in specification of "K modifier"]]
@@ -777,8 +777,8 @@ ExportDataToCSV <- function(ID){
                                     meansurvpred  = mean(PredVital),                      # adult survival, pred
 									meanpreygrow  = mean(PreyGrowth),
 									meanpredgrow  = mean(PredGrowth),
-									Kprey         = sum(PopVars[[1]]$popK),              # total carrying capacity, prey
-									Kpred         = sum(PopVars[[2]]$popK)               # carrying capacity, pred
+									#Kprey         = sum(PopVars[[1]]$popK),              # total carrying capacity, prey
+									#Kpred         = sum(PopVars[[2]]$popK)               # carrying capacity, pred
 								)
      #if(CurTimeStep[ID+1]+1 >= nYears) {
      #     StoredTotal[nYears+1,] <<- colMeans(StoredTotal, na.rm = TRUE)
