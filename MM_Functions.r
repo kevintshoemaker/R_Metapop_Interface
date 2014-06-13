@@ -101,11 +101,11 @@ SMLambdas <- list()
  #PreyLambdas <- numeric(0)
  #PreyStMats <- list()
  
-decimals <- 3    # note: takes a very long time with three decimal places...
+decimals <- 2    # note: takes a very long time with three decimal places...
 
 tempFileName <- paste("Stage_matrices_",decimals,".RData",sep="")
 if(file.exists(tempFileName)){
-	load("Stage_matrices.RData")
+	load(tempFileName)
 }else{
 	# SPECIFY MEAN, MIN, and MAX vital rates for predator and prey (prey=prairie dog and predator = black-footed ferret)
 
@@ -298,7 +298,7 @@ temp <- data.frame(
   MaxKill = MaxKill,     # asymptote of prey killed per predator (killed, but not necessarily eaten and used for reproduction)
   EffConst = EffConst   #   0.02  # this term translates consumption rates (functional response) to predator lambda. That is, converts the functional response to a numerical response.  
 )
-write.table(temp,filenameParams,sep=",",append=T,row.names=FALSE,col.names=TRUE)
+suppressWarnings(write.table(temp,filenameParams,sep=",",row.names=FALSE,col.names=TRUE))
 
 ###########################################
 #####    ANCILLARY FUNCTIONS (e.g., functional response equations that can be reused)

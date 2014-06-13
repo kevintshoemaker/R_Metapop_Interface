@@ -246,4 +246,6 @@ while( TRUE ) {         					# accept any number of requests, until the connecti
   }   							# end script for JSON interpreting
 }   # end WHILE loop
 
+closeAllConnections()
+
 #q()
