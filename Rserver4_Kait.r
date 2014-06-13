@@ -177,8 +177,8 @@ listToMat <- function(inp){
 
   # read in the functions to be used... (may be stored in separate files...)
 
-source("C:\\Users\\Kait\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\RMetamodelFunctions_Kait.r")
-source("C:\\Users\\Kait\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\MM_Functions_Kait.r")
+source("C:\\Users\\Kait\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\RMetamodelFunctions.r")
+source("C:\\Users\\Kait\\Dropbox\\Pdog-BFF_TwoWay\\R_JSON_Server\\MM_Functions.r")
 
 
 ###########################################
