@@ -115,9 +115,11 @@ StartSimulation <- function(MetapopStateVarsGlobal,ClientID){      # ClientID id
      #       dispersal. [[this should probably be tabled for now, until we can
      #       clarify the details]]
      AllModifiers[[ClientID+1]]$Disp  <<- numeric(GlobalVars[[ClientID+1]]$nPopulations)
-	 
-	 
-		 ###################################
+
+
+
+ 
+	###################################
 	####### SET UP STORAGE VARIABLES 
 	
 	if(ClientID==1){      # if final model is being read in... then set up storage structure.
@@ -157,6 +159,31 @@ StartTimeStep <- function(ClientID){
      #if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModKTest1(AllModifiers[[ClientID+1]],ClientID)   # update the Modifier for this Client ID
      #if(ClientID==1) AllModifiers[[ClientID+1]] <<- ModKTest2(AllModifiers[[ClientID+1]],ClientID)  #ModVitalTest1(AllModifiers[[ClientID+1]],ClientID)
      ########################
+
+	###################################
+	####### SET UP STAGE MATRICES 	 
+
+	if((ClientID==0)&(CurTimeStep[ClientID+1]==1)){      # if final model is being read in... then set up stage matrices.
+		tempFileName <- paste("Stage_matrices_",decimals,".RData",sep="")
+		if(file.exists(tempFileName)){
+			load(tempFileName, envir = global_env)
+		}else{
+			tempobj <- preComputeSMs(MinMat=MinPreyMat,BaselineMat=BaselinePreyMat,MaxMat=MaxPreyMat,decimals=decimals)   # for prey
+			PreyLambdas <<- tempobj$Lambdas
+			PreyStMats <<- tempobj$StMats
+			if(is.null(PreyStMats[[1]])) PreyStMats[[1]] <<- MinPreyMat   # correct this better later...
+			if(is.null(PreyStMats[[length(PreyLambdas)]])) PreyStMats[[length(PreyLambdas)]] <<- MaxPreyMat   # correct this better later...
+
+			tempobj <- preComputeSMs(MinMat=MinPredMat,BaselineMat=BaselinePredMat,MaxMat=MaxPredMat,decimals=decimals)   # for prey
+			PredLambdas <<- tempobj$Lambdas
+			PredStMats <<- tempobj$StMats
+			if(is.null(PredStMats[[1]])) PredStMats[[1]] <<- MinPredMat   # correct this better later...
+			if(is.null(PredStMats[[length(PredLambdas)]])) PredStMats[[length(PredLambdas)]] <<- MaxPredMat   # correct this better later...
+
+			save(MaxPredMat,MinPredMat,BaselinePredMat,MaxPreyMat,MinPreyMat,BaselinePreyMat,PreyLambdas,PredLambdas,PreyStMats,PredStMats,
+			            envir = global_env, file=tempFileName)
+		}
+	}
      
      ############  TEST #2: implement Resit's suggested predator prey model
      if(ClientID==0) AllModifiers[[ClientID+1]] <<- ModVitalPrey1(AllModifiers[[ClientID+1]],ClientID)  # Update Prey
@@ -188,7 +215,7 @@ StopTimeStep <- function(MetapopStateVarsPop,ClientID){
           PopVars[[ClientID+1]]$popStMat <<- array(PopVars[[ClientID+1]]$popStMat[1,1],dim=c(1,1,1))
      }
      
-     CurTimeStep[ClientID+1] <<- MetapopStateVarsPop$currentYear     # Record the year of the simulation
+     CurTimeStep[ClientID+1] <<- CurTimeStep[ClientID+1] + 1    #  MetapopStateVarsPop$currentYear     # Record the year of the simulation
      return(is.numeric(ClientID))    
 }
 

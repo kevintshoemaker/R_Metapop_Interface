@@ -59,7 +59,7 @@
 # popHarvest: number of individuals harvested (array of dimension "nPopulations", "nStages")
 # popSupplement:  number of individuals supplemented (array of dimension "nPopulations", "nStages")
 # popK2: actual or realized K (with stochasticity).
-# popStMat2: Realized transition matrices, including stochasticity ?
+# popStMat2: Realized transition matrices, including stochasticity …
 # popAbundSt: Stage-specific abundances for each population (matrix of dimension "nPopulations","nStages")  [[modifications result in specification of "abundance modifier" ]]
 # popStMat: Mean transition matrices for each population (array of dimension "nPopulations", "nStages", "nStages")   [[modifications result in specification of "vital rate modifier"]]
 # popK: Mean population-specific carrying capacity (vector of length "nPopulations").  [[modifications result in specification of "K modifier"]]
@@ -96,146 +96,131 @@ SMLambdas <- list()
 
 ##################################
 #   PRE-COMPUTE A SERIES OF PLAUSIBLE STAGE MATRICES WITH LAMBDA VALS.... 
-    # returns: a list of stage matrices along with corresponding lambdas...
+    
 
- #PreyLambdas <- numeric(0)
- #PreyStMats <- list()
+# PreyLambdas <- numeric(0)      # returns: a list of stage matrices along with corresponding lambdas...
+# PreyStMats <- list()
+# PredLambdas <- numeric(0)
+# PredStMats <- list()
+
+# SPECIFY MEAN, MIN, and MAX vital rates for predator and prey (prey=prairie dog and predator = black-footed ferret)
+
+sink("MinPreyMat.csv")
+cat("
+	0.050,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0,		0,		0,		0,		0,		0	
+	0.500,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0.500,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0.500,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0.400,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0.300,	0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0.150,	0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0.100,	0,		0,		0,		0,		0,		0,		0
+	0.040,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0.400,	0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0.300,	0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.300,	0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.200,	0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.100,	0
+")
+sink()
+MinPreyMat <- as.matrix(read.csv("MinPreyMat.csv",header=F))
+
+sink("BaselinePreyMat.csv")
+cat("
+	0.209,	0.418,	0.418,	0.418,	0.418,	0.418,	0.418,	0.418,	0,		0,		0,		0,		0,		0	
+	0.729,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0.772,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0.723,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0.606,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0.451,	0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0.282,	0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0.127,	0,		0,		0,		0,		0,		0,		0
+	0.189,	0.379,	0.379,	0.379,	0.379,	0.379,	0.379,	0.379,	0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0.528,	0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0.500,	0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.428,	0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.300,	0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.127,	0
+")
+sink()
+BaselinePreyMat <- as.matrix(read.csv("BaselinePreyMat.csv",header=F))
+
+		 ### Mean prey vital rates, at low conspecific densities, few predators
+sink("MaxPreyMat.csv")
+cat("
+	1.10,	2.35,	2.35,	2.35,	2.35,	2.35,	2.35,	2.35,	0,		0,		0,		0,		0,		0	
+	0.850,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0.950,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0.94,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0.900,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0.750,	0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0.400,	0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0.150,	0,		0,		0,		0,		0,		0,		0
+	1.0,	2.0,	2.0,	2.0,	2.0,	2.0,	2.0,	2.0,	0,		0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0.900,	0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0.900,	0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.800,	0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.500,	0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.150,	0
+")
+sink()
+MaxPreyMat <- as.matrix(read.csv("MaxPreyMat.csv",header=F))
+
+
+##########################################
+### PREDATOR VITAL RATES...
+
+sink("MinPredMat.csv")            # note: should match predRnoprey... that is, these parameters should reflect absence of prey
+cat("
+	0.05,	0.10,	0.10,	0.10,	0.000,	0,		0,		0,		0,		0		
+	0.05,	0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0.1,	0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0.2,	0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0.2,	0,		0,		0,		0,		0,		0
+	0.05,	0.10,	0.10,	0.10,	0.000,	0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0.05,	0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0.1,	0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0.2,	0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0.2,	0
+")
+sink()
+MinPredMat <- as.matrix(read.csv("MinPredMat.csv",header=F))
+
+sink("BaselinePredMat.csv")
+cat("
+	0.73,	1.25,	1.25,	1.25,	0.000,	0,		0,		0,		0,		0		
+	0.390,	0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0.670,	0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0.670,	0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0.670,	0,		0,		0,		0,		0,		0
+	0.73,	1.25,	1.25,	1.25,	0.000,	0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0.390,	0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0.670,	0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0.670,	0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0.670,	0
+")
+sink()
+BaselinePredMat <- as.matrix(read.csv("BaselinePredMat.csv",header=F))
+
+sink("MaxPredMat.csv")          # note: should match Rmax for predator...
+cat("
+	1.1,	1.9,	1.9,	1.9,	0.000,	0,		0,		0,		0,		0		
+	0.50,	0,		0,		0,		0,		0,		0,		0,		0,		0
+	0,		0.80,	0,		0,		0,		0,		0,		0,		0,		0
+	0,		0,		0.75,	0,		0,		0,		0,		0,		0,		0
+	0,		0,		0,		0.7,	0,		0,		0,		0,		0,		0
+	1.1,	1.9,	1.9,	1.9,	0.000,	0,		0,		0,		0,		0
+	0,		0,		0,		0,		0,		0.50,	0,		0,		0,		0
+	0,		0,		0,		0,		0,		0,		0.80,	0,		0,		0
+	0,		0,		0,		0,		0,		0,		0,		0.75,	0,		0
+	0,		0,		0,		0,		0,		0,		0,		0,		0.7,	0
+")
+sink()
+MaxPredMat <- as.matrix(read.csv("MaxPredMat.csv",header=F))
  
 decimals <- 2    # note: takes a very long time with three decimal places...
 
-tempFileName <- paste("Stage_matrices_",decimals,".RData",sep="")
-if(file.exists(tempFileName)){
-	load(tempFileName)
-}else{
-	# SPECIFY MEAN, MIN, and MAX vital rates for predator and prey (prey=prairie dog and predator = black-footed ferret)
-
-	sink("MinPreyMat.csv")
-	cat("
-		0.050,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0,		0,		0,		0,		0,		0	
-		0.500,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0.500,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0.500,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0.400,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0.300,	0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0.150,	0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0.100,	0,		0,		0,		0,		0,		0,		0
-		0.040,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0.100,	0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0.400,	0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.300,	0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.300,	0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.200,	0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.100,	0
-	")
-	sink()
-	MinPreyMat <- as.matrix(read.csv("MinPreyMat.csv",header=F))
-
-	sink("BaselinePreyMat.csv")
-	cat("
-		0.209,	0.418,	0.418,	0.418,	0.418,	0.418,	0.418,	0.418,	0,		0,		0,		0,		0,		0	
-		0.729,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0.772,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0.723,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0.606,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0.451,	0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0.282,	0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0.127,	0,		0,		0,		0,		0,		0,		0
-		0.189,	0.379,	0.379,	0.379,	0.379,	0.379,	0.379,	0.379,	0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0.528,	0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.500,	0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.428,	0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.300,	0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.127,	0
-	")
-	sink()
-	BaselinePreyMat <- as.matrix(read.csv("BaselinePreyMat.csv",header=F))
-
-			 ### Mean prey vital rates, at low conspecific densities, few predators
-	sink("MaxPreyMat.csv")
-	cat("
-		1.10,	2.35,	2.35,	2.35,	2.35,	2.35,	2.35,	2.35,	0,		0,		0,		0,		0,		0	
-		0.850,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0.950,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0.94,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0.900,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0.750,	0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0.400,	0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0.150,	0,		0,		0,		0,		0,		0,		0
-		1.0,	2.0,	2.0,	2.0,	2.0,	2.0,	2.0,	2.0,	0,		0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0.900,	0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.900,	0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.800,	0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.500,	0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0.150,	0
-	")
-	sink()
-	MaxPreyMat <- as.matrix(read.csv("MaxPreyMat.csv",header=F))
-
-
-	##########################################
-	### PREDATOR VITAL RATES...
-
-	sink("MinPredMat.csv")            # note: should match predRnoprey... that is, these parameters should reflect absence of prey
-	cat("
-		0.05,	0.10,	0.10,	0.10,	0.000,	0,		0,		0,		0,		0		
-		0.05,	0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0.1,	0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0.2,	0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0.2,	0,		0,		0,		0,		0,		0
-		0.05,	0.10,	0.10,	0.10,	0.000,	0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0.05,	0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0.1,	0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0.2,	0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0.2,	0
-	")
-	sink()
-	MinPredMat <- as.matrix(read.csv("MinPredMat.csv",header=F))
-
-	sink("BaselinePredMat.csv")
-	cat("
-		0.73,	1.25,	1.25,	1.25,	0.000,	0,		0,		0,		0,		0		
-		0.390,	0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0.670,	0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0.670,	0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0.670,	0,		0,		0,		0,		0,		0
-		0.73,	1.25,	1.25,	1.25,	0.000,	0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0.390,	0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0.670,	0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0.670,	0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0.670,	0
-	")
-	sink()
-	BaselinePredMat <- as.matrix(read.csv("BaselinePredMat.csv",header=F))
-
-	sink("MaxPredMat.csv")          # note: should match Rmax for predator...
-	cat("
-		1.1,	1.9,	1.9,	1.9,	0.000,	0,		0,		0,		0,		0		
-		0.50,	0,		0,		0,		0,		0,		0,		0,		0,		0
-		0,		0.80,	0,		0,		0,		0,		0,		0,		0,		0
-		0,		0,		0.75,	0,		0,		0,		0,		0,		0,		0
-		0,		0,		0,		0.7,	0,		0,		0,		0,		0,		0
-		1.1,	1.9,	1.9,	1.9,	0.000,	0,		0,		0,		0,		0
-		0,		0,		0,		0,		0,		0.50,	0,		0,		0,		0
-		0,		0,		0,		0,		0,		0,		0.80,	0,		0,		0
-		0,		0,		0,		0,		0,		0,		0,		0.75,	0,		0
-		0,		0,		0,		0,		0,		0,		0,		0,		0.7,	0
-	")
-	sink()
-	MaxPredMat <- as.matrix(read.csv("MaxPredMat.csv",header=F))
-
-	tempobj <- preComputeSMs(MinMat=MinPreyMat,BaselineMat=BaselinePreyMat,MaxMat=MaxPreyMat,decimals=decimals)   # for prey
-	PreyLambdas <- tempobj$Lambdas
-	PreyStMats <- tempobj$StMats
-	if(is.null(PreyStMats[[1]])) PreyStMats[[1]] <- MinPreyMat   # correct this better later...
-	if(is.null(PreyStMats[[length(PreyLambdas)]])) PreyStMats[[length(PreyLambdas)]] <- MaxPreyMat   # correct this better later...
-
-	tempobj <- preComputeSMs(MinMat=MinPredMat,BaselineMat=BaselinePredMat,MaxMat=MaxPredMat,decimals=decimals)   # for prey
-	PredLambdas <- tempobj$Lambdas
-	PredStMats <- tempobj$StMats
-	if(is.null(PredStMats[[1]])) PredStMats[[1]] <- MinPredMat   # correct this better later...
-	if(is.null(PredStMats[[length(PredLambdas)]])) PredStMats[[length(PredLambdas)]] <- MaxPredMat   # correct this better later...
-
-	save(MaxPredMat,MinPredMat,BaselinePredMat,MaxPreyMat,MinPreyMat,BaselinePreyMat,PreyLambdas,PredLambdas,PreyStMats,PredStMats,file=tempFileName)
-}
+global_env <- parent.frame()
 
 ##################################
 #  PREDATOR PREY INTERACTION PARAMETERS
@@ -741,7 +726,7 @@ ModVitalPred1 <- function(Old, ID){
 
 ExportDataToCSV <- function(ID){
  
-	if(CurTimeStep[ID+1]==0){
+	if(CurTimeStep[ID+1]==1){
 			#name the csv output files
 		filenamePop <<- paste("PredPreyResults_BFFTest1_Pops ",datetime,".csv",sep="")
 		filenameTot <<- paste("PredPreyResults_BFFTest1_Totals ",datetime,".csv",sep="")
@@ -776,9 +761,9 @@ ExportDataToCSV <- function(ID){
                                     meansurvprey  = mean(PreyVital),                     # adult survival, prey
                                     meansurvpred  = mean(PredVital),                      # adult survival, pred
 									meanpreygrow  = mean(PreyGrowth),
-									meanpredgrow  = mean(PredGrowth)
-									#Kprey         = sum(PopVars[[1]]$popK),              # total carrying capacity, prey
-									#Kpred         = sum(PopVars[[2]]$popK)               # carrying capacity, pred
+									meanpredgrow  = mean(PredGrowth),
+									Kprey         = sum(PopVars[[1]]$popK),              # total carrying capacity, prey
+									Kpred         = sum(PopVars[[2]]$popK)               # carrying capacity, pred
 								)
      #if(CurTimeStep[ID+1]+1 >= nYears) {
      #     StoredTotal[nYears+1,] <<- colMeans(StoredTotal, na.rm = TRUE)
