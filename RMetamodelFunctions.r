@@ -163,10 +163,11 @@ StartTimeStep <- function(ClientID){
 	###################################
 	####### SET UP STAGE MATRICES 	 
 
-	if((ClientID==0)&(CurTimeStep[ClientID+1]==1)){      # if final model is being read in... then set up stage matrices.
+	if((ClientID==0)&(CurTimeStep[ClientID+1]==1)){      # if first model is being read in... then set up stage matrices.
 		tempFileName <- paste("Stage_matrices_",decimals,".RData",sep="")
 		if(file.exists(tempFileName)){
 			load(tempFileName, envir = global_env)
+			    #PreyLambdas <<- PreyLambdas
 		}else{
 			tempobj <- preComputeSMs(MinMat=MinPreyMat,BaselineMat=BaselinePreyMat,MaxMat=MaxPreyMat,decimals=decimals)   # for prey
 			PreyLambdas <<- tempobj$Lambdas

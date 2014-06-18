@@ -218,9 +218,9 @@ cat("
 sink()
 MaxPredMat <- as.matrix(read.csv("MaxPredMat.csv",header=F))
  
-decimals <- 2    # note: takes a very long time with three decimal places...
+decimals <- 3    # note: takes a very long time with three decimal places...
 
-global_env <- parent.frame()
+global_env <-  .GlobalEnv  #parent.frame()
 
 ##################################
 #  PREDATOR PREY INTERACTION PARAMETERS
@@ -741,7 +741,7 @@ ExportDataToCSV <- function(ID){
      #for(p in 1:GlobalVars[[ID+1]]$nPopulations){
 
 	StoredPops <<- data.frame(
-								timestep   =rep(CurTimeStep[ID+1] + 1,times=GlobalVars[[ID+1]]$nPopulations), 
+								timestep   =rep(CurTimeStep[ID+1],times=GlobalVars[[ID+1]]$nPopulations), 
 								predpop    =paste("Predator ",c(1:GlobalVars[[ID+1]]$nPopulations),sep=" "),
 								predabund  =PopVars[[2]]$popAbundTot,
 								predsurv   =PredVital,
@@ -755,7 +755,7 @@ ExportDataToCSV <- function(ID){
      
      #Store totals
 	StoredTotal <<- data.frame(
-									timestep      = CurTimeStep[ID+1] + 1, 
+									timestep      = CurTimeStep[ID+1], 
                                     totabundprey  = sum(PopVars[[1]]$popAbundTot),       # mp abundance, prey  
                                     totabundpred  = sum(PopVars[[2]]$popAbundTot),       # mp abundance, pred
                                     meansurvprey  = mean(PreyVital),                     # adult survival, prey
@@ -770,9 +770,9 @@ ExportDataToCSV <- function(ID){
      #}
      
      #Write csv files
-	if(CurTimeStep[ID+1]==0){
-		write.table(StoredPops,filenamePop,sep=",",append=T,row.names=FALSE,col.names=TRUE)  
-		write.table(StoredTotal,filenameTot,sep=",",append=T,row.names=FALSE,col.names=TRUE)
+	if(CurTimeStep[ID+1]==1){
+		write.table(StoredPops,filenamePop,sep=",",append=F,row.names=FALSE,col.names=TRUE)  
+		write.table(StoredTotal,filenameTot,sep=",",append=F,row.names=FALSE,col.names=TRUE)
 	}else{
 		write.table(StoredPops,filenamePop,sep=",",append=T,row.names=FALSE,col.names=FALSE)  
 		write.table(StoredTotal,filenameTot,sep=",",append=T,row.names=FALSE,col.names=FALSE)			
