@@ -527,7 +527,7 @@ ModVitalPrey1 <- function(Old, ID){
      # sum of all survivals from each stage when N is approx. 0 (when R=Rmax)
      
 	for(p in 1:GlobalVars[[ID+1]]$nPopulations){     # LOOP THROUGH ALL PREY POPULATIONS
-
+	
           
 		if(PreyKcap<=0){				# if carrying capacity is zero...      
 			lmult <- 0					# then set all vital rates to zero
