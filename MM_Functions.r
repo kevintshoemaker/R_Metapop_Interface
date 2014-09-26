@@ -83,7 +83,7 @@ DEBUG = TRUE     # if true, writes out lots of messages to the dump file
 
  # // PreyRmax (max growth rate) and PreyKcap are assumed to be those when there is no predation
 PreyRmax <- 2.43      # Rmax for prey  (no predation)
-PreyKcap <- 1000000      #  K for prey (no predation)
+PreyKcap <- 500000      #  K for prey (no predation)
 
 PredRmax <- 1.9    # Rmax for predator population when glutted with prey resources. 
 PredKcap <- 1000      # predator carrying capacity, when glutted with prey resources. 
@@ -485,15 +485,19 @@ ModVitalPrey1 <- function(Old, ID){
 	New <- Old
 	New$ChangeVital <- TRUE
 
-	flag <<- FALSE                    # initialize warning flag: no warnings
-	ErrMsg <<- "Error: "              # initialize error message
-	WarningMsg <<- "Warning: "        # initialize warning message
-	Dumpfile <<- "MMdump.txt"         # initialize the dumpfile for storing warnings and errors
+		flag <<- FALSE                    # initialize warning flag: no warnings
+		ErrMsg <<- "Error: "              # initialize error message
+		WarningMsg <<- "Warning: "        # initialize warning message
+	
+	if(CurTimeStep[ID+1]==1){		  	  # at timestep 0, perform more checks
 
-	CheckParams1()                    # check for initial errors.... only at timestep 0
+		Dumpfile <<- "MMdump.txt"         # initialize the dumpfile for storing warnings and errors
 
-                                      # at timestep 0, perform more checks
-	if(CurTimeStep[ID+1]==0){
+		CheckParams1()                    # check for initial errors.... only at timestep 0
+	
+		if(DEBUG) write("",file=Dumpfile,sep="\n",append=FALSE)
+		
+                                      
 		#preyStMat <<- as.matrix(PopVars[[1]]$popStMat[1,,])         # set base stage matrix for prey population: baseline for further modifications
 
 		if(nrow(as.matrix(MaxPreyMat))>1){
@@ -572,6 +576,8 @@ ModVitalPrey1 <- function(Old, ID){
 			(effectivePredPop/PopVars[[1]]$popAbundTot[p])
 		}
 
+		if(DEBUG) write(paste("PredMort is",PredMort," at time ",CurTimeStep[ID+1],sep=""),file=Dumpfile,sep="\n",append=T)
+		
 		lmult <- lmult / exp(PredMort)         # finally, include predator effect
 		#New$Vital[p,,] <- as.matrix(preyStMat) * lmult
 		targ <- round(lmult,decimals)
@@ -602,6 +608,9 @@ ModVitalPrey1 <- function(Old, ID){
 		New<-ErrMsg     # otherwise, return the relevant error message(s)
 	}
 	#if(flag==FALSE) PreyVital <<- New$Vital[1,GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages] 
+	
+	ExportDataToCSV(ID)
+	
 	return(New)
 }
 
@@ -627,7 +636,7 @@ ModVitalPred1 <- function(Old, ID){
 	flag <<- FALSE   									# initialize warning flag: no warnings
 	ErrMsg <<- "Error:"  # initialize error message
 
-	if(CurTimeStep[ID+1]==0){      						# if the initial time step...
+	if(CurTimeStep[ID+1]==1){      						# if the initial time step...
 		#predStMat <<- as.matrix(PopVars[[2]]$popStMat[1,,])     # set base stage matrix for prey population. Should have lambda=1
 
 		#CheckParams1()    								# check for initial parameters that might be off. 
@@ -728,7 +737,7 @@ ExportDataToCSV <- function(ID){
  
 	if(CurTimeStep[ID+1]==1){
 			#name the csv output files
-		filenamePop <<- paste("PredPreyResults_BFFTest1_Pops ",datetime,".csv",sep="")
+		#filenamePop <<- paste("PredPreyResults_BFFTest1_Pops ",datetime,".csv",sep="")
 		filenameTot <<- paste("PredPreyResults_BFFTest1_Totals ",datetime,".csv",sep="")
 
             # clear the csv files in preparation for inputs (only relevant if time not used in name...)
@@ -740,16 +749,16 @@ ExportDataToCSV <- function(ID){
      #Store individual pred populations
      #for(p in 1:GlobalVars[[ID+1]]$nPopulations){
 
-	StoredPops <<- data.frame(
-								timestep   =rep(CurTimeStep[ID+1],times=GlobalVars[[ID+1]]$nPopulations), 
-								predpop    =paste("Predator ",c(1:GlobalVars[[ID+1]]$nPopulations),sep=" "),
-								predabund  =PopVars[[2]]$popAbundTot,
-								predsurv   =PredVital,
-								predgrowth = PredGrowth,
+	# StoredPops <<- data.frame(
+								# timestep   =rep(CurTimeStep[ID+1],times=GlobalVars[[ID+1]]$nPopulations), 
+								# predpop    =paste("Predator ",c(1:GlobalVars[[ID+1]]$nPopulations),sep=" "),
+								# predabund  =PopVars[[2]]$popAbundTot,
+								# predsurv   =PredVital,
+								# predgrowth = PredGrowth,
 						  #PredEffectivePreyPop[p],
-								preykilled =PreyConsumed
+								# preykilled =PreyConsumed
 						  #PredProduced[p]
-						)
+						# )
 						
      #}
      
@@ -771,10 +780,10 @@ ExportDataToCSV <- function(ID){
      
      #Write csv files
 	if(CurTimeStep[ID+1]==1){
-		write.table(StoredPops,filenamePop,sep=",",append=F,row.names=FALSE,col.names=TRUE)  
+		#write.table(StoredPops,filenamePop,sep=",",append=F,row.names=FALSE,col.names=TRUE)  
 		write.table(StoredTotal,filenameTot,sep=",",append=F,row.names=FALSE,col.names=TRUE)
 	}else{
-		write.table(StoredPops,filenamePop,sep=",",append=T,row.names=FALSE,col.names=FALSE)  
+		#write.table(StoredPops,filenamePop,sep=",",append=T,row.names=FALSE,col.names=FALSE)  
 		write.table(StoredTotal,filenameTot,sep=",",append=T,row.names=FALSE,col.names=FALSE)			
 	}
 }
