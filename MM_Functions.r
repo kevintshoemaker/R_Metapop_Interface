@@ -579,6 +579,9 @@ ModVitalPrey1 <- function(Old, ID){
 		if(DEBUG) write(paste("PredMort is",PredMort," at time ",CurTimeStep[ID+1],sep=""),file=Dumpfile,sep="\n",append=T)
 		
 		lmult <- lmult / exp(PredMort)         # finally, include predator effect
+		
+		if(DEBUG) write(paste("target prey R is ",lmult," at time ",CurTimeStep[ID+1],sep="", "prey abundance is ", sum(PopVars[[1]]$popAbundTot)),file=Dumpfile,sep="\n",append=T)
+		
 		#New$Vital[p,,] <- as.matrix(preyStMat) * lmult
 		targ <- round(lmult,decimals)
 		if(targ<min(PreyLambdas)){ 
@@ -586,10 +589,10 @@ ModVitalPrey1 <- function(Old, ID){
 		}else if(targ>max(PreyLambdas)){
 			ndx <- length(PreyLambdas)
 		}else{
-			ndx <- which(abs(PreyLambdas-targ)<=tol)
+			ndx <- which.min(abs(PreyLambdas-targ))
 		}
 		 
-		if(length(ndx)>1) ndx <- ndx[1]
+		#if(length(ndx)>1) ndx <- ndx[1]
 		if(length(ndx)==0){
 			flag <<- TRUE           # throw error if eigenvalue of stage matrix is not equal to 1
 			ErrMsg <<- paste(ErrMsg," : ","target Lambda does not match with any possible stage matrix for model ",ID,sep=" ")
@@ -609,7 +612,7 @@ ModVitalPrey1 <- function(Old, ID){
 	}
 	#if(flag==FALSE) PreyVital <<- New$Vital[1,GlobalVars[[ID+1]]$nStages, GlobalVars[[ID+1]]$nStages] 
 	
-	ExportDataToCSV(ID)
+	if(sum(PopVars[[2]]$popAbundTot)==0) ExportDataToCSV(ID)
 	
 	return(New)
 }
@@ -673,7 +676,7 @@ ModVitalPred1 <- function(Old, ID){
 		FuncResp <- RDFuncResp(effectivePreyPop,PopVars[[2]]$popAbundTot[p],alpha,htime)
 		PreyConsumed[p] <<- FuncResp * PopVars[[2]]$popAbundTot[p]
 		lmult <- exp(EffConst * FuncResp) * PredRnoprey    # compute expected lambda(dominant eigenvalue) for this year
-        if(DEBUG) write(paste("target pred Rmax is ",lmult," at time ",CurTimeStep[ID+1],sep=""),file=Dumpfile,sep="\n",append=T)
+        if(DEBUG) write(paste("target pred R is ",lmult," at time ",CurTimeStep[ID+1],sep=""),file=Dumpfile,sep="\n",append=T)
 			# // from Pred_R := exp(EffConst * RDFuncResp(PreyPop,PredPop,alpha,htime)) / exp(mu);
 
 			# // NOTE: This equation assumes that the eigenvalue of the PREDATOR stage matrix is 1.0,
