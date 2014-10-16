@@ -522,7 +522,7 @@ ModVitalPrey1 <- function(Old, ID){
 			flag <<- TRUE
 			ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
 			write(ErrMsg,file=Dumpfile,sep="\n",append=T)
-			break
+			#break
 		}   
 	}   # end loop through the actions for timestep 0
        
@@ -664,7 +664,7 @@ ModVitalPred1 <- function(Old, ID){
 			flag <<- TRUE
 			ErrMsg <<- paste(ErrMsg," : "," survival above 1! ",sep="")
 			write(ErrMsg,file=Dumpfile,sep="\n",append=T)
-			break
+			#break
 		} 
 	}
 
