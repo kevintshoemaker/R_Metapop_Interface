@@ -275,13 +275,16 @@ washObjects <- function(){
 ###################
 #### POPULATE TEST OBJECTS
 
-buildObjects(nPopulations=1,nStages=1)      # initialize global and population state vars for two populations        
- # washObjects()                               # run through the JSON-RPC "washer"
-
-
+nPopulations=1
+nStages=14
 nmodels=2  # number of MP instances
 predpop=2  # which is predator?
 preypop=1  # which is prey?
+
+
+buildObjects(nPopulations=nPopulations,nStages=nStages)      # initialize global and population state vars for two populations        
+ # washObjects()                               # run through the JSON-RPC "washer"
+
 
 m=1
 for(m in 1:nmodels){
@@ -294,13 +297,14 @@ for(m in 1:nmodels){
                                     # initialize stage matrix
  # PopVarsx[[m]]$popStMat <- listToMat(PopVarsx[[m]]$popStMat)
   for(p in 1:GlobalVarsx[[m]]$nPopulations){
-    if(m==preypop) PopVarsx[[m]]$popStMat[p,1,1] <- 2.5  # matrix(c(0,.5,.5,.75),nrow=2)  #matrix(1,nrow=1) #
-    if(m==predpop) PopVarsx[[m]]$popStMat[p,1,1] <- 1.5  # matrix(c(0,.5,.5,.75),nrow=2)  #matrix(1,nrow=1)  # 
+    if(m==preypop) PopVarsx[[m]]$popStMat[p,,] <- BaselinePreyMat #2.5  # matrix(c(0,.5,.5,.75),nrow=2)  #matrix(1,nrow=1) #
+    if(m==predpop) PopVarsx[[m]]$popStMat[p,,] <- BaselinePreyMat #1.5  # matrix(c(0,.5,.5,.75),nrow=2)  #matrix(1,nrow=1)  # 
   }
 
   #GlobalVarsx[[m]]$constraintsMat <- listToMat(GlobalVarsx[[m]]$constraintsMat)
-  GlobalVarsx[[m]]$constraintsMat <- matrix(c(0,1,0,1),nrow=2)
-  
+  GlobalVarsx[[m]]$constraintsMat <- matrix(c(rep(0,times=nStages),rep(1,times=nStages*(nStages-1))),nrow=nStages,byrow=T) #matrix(c(0,1,0,1),nrow=2)
+  GlobalVarsx[[m]]$constraintsMat[9,] <- rep(0,times=nStages)
+
 }
 
 
@@ -316,15 +320,45 @@ ClientIDs <- numeric(0)
 CurTimeStep <- numeric(0)
 ExtinctFlag <- logical(0)
 
+ts = 100    # number of timesteps
+
 Initialize(ClientID=0)
 Initialize(ClientID=1)
 
 StartSimulation(MetapopStateVarsGlobal=GlobalVarsx[[1]],ClientID=0)
 StartSimulation(MetapopStateVarsGlobal=GlobalVarsx[[2]],ClientID=1)
 
+GlobalVars[[1]] <- GlobalVarsx[[1]]
+GlobalVars[[2]] <- GlobalVarsx[[2]]
+
+GlobalVars
+
 PopVars[[1]] <- PopVarsx[[1]]
 PopVars[[2]] <- PopVarsx[[2]]
 
+BaselinePredMat=BaselinePreyMat
+MaxPredMat=MaxPreyMat
+MinPredMat=MinPreyMat
+
+
+###########################
+#########  SIMULATE ALL RPC CALLS
+
+#file.remove("Stage_matrices_3.RData")
+StopTimeStep(MetapopStateVarsPop=PopVars[[1]],ClientID=0)   # prey
+StopTimeStep(MetapopStateVarsPop=PopVars[[2]],ClientID=1)   # pred
+t=1;client=1
+
+system.time(
+ for(t in 1:ts){
+   for(client in 1:nmodels){
+     StartTimeStep(ClientID=client-1)
+   }
+ }
+)
+
+
+file.remove("Stage_matrices_3.RData")
 
 ############################
 ##############  CALL THE "MOD" FUNCTION (from MM_Functions.r)
