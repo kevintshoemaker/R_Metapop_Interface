@@ -391,20 +391,11 @@ preComputeSMs <- function(MinMat,BaselineMat,MaxMat,decimals=1){
  
       # select one matrix for each target lambda value
   for(t in 1:length(targets)){
-     ndx <- which(abs(round(temp2,decimals)-targets[t])<(1/(decimals*10*2)))
+     ndx <- which.min(abs(temp2-targets[t]))
 	 selected[[t]] <- matrix()
 	 if(length(ndx)>0){
 	   select <- ndx[1]  #sample(ndx,1)
 	   selected[[t]] <- temp[[select]]
-	 }
-	 if(is.null(nrow(selected[[t]]))){
-		if(!is.null(nrow(selected[[t-1]]))){ 
-			selected[[t]] <- selected[[t-1]]
-		}else{
-			if(!is.null(nrow(selected[[t-2]]))){ 
-				selected[[t]] <- selected[[t-2]]	
-			}
-		}
 	 }
   }  
   returnobj$StMats <- selected
