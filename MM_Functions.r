@@ -481,7 +481,7 @@ ModVitalPrey1 <- function(Old, ID){
      #        INPUTS
      #   Old : Modifier object from the last year (to be updated)
      #   ID  : Client ID for the associated Metapop instance 
-     
+    #browser() 
 	New <- Old
 	New$ChangeVital <- TRUE
 

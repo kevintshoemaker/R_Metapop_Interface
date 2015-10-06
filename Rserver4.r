@@ -1,7 +1,7 @@
 
-suppressWarnings(library( "rjson", quietly = TRUE))        # load rjson library
-suppressWarnings(library( "utils", quietly = TRUE ))        # load utils library
-suppressWarnings(suppressPackageStartupMessages(library( "RJSONIO", quietly= TRUE )))       # load the "other" json package
+suppressWarnings(require( "rjson", quietly = TRUE))        # load rjson library
+suppressWarnings(require( "utils", quietly = TRUE ))        # load utils library
+suppressWarnings(suppressPackageStartupMessages(require( "RJSONIO", quietly= TRUE )))       # load the "other" json package
 suppressWarnings(require( "stats", quietly = TRUE ))
 
 ##################################################################################################
